@@ -8,7 +8,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "check-alerts": "node scripts/trigger.js"
+    "check-alerts": "node scripts/trigger.js",
+    "add-sample-data": "node scripts/addSamplePriceHistory.js",
+    "add-multiple-samples": "node scripts/addSamplePriceHistory.js --multiple",
+    "add-real-data": "node scripts/addRealProductData.js"
   },
   "dependencies": {
     "axios": "^1.10.0",
@@ -16,6 +19,7 @@
     "cheerio": "^1.1.0",
     "dotenv": "^17.0.1",
     "firebase": "^11.10.0",
+    "lucide-react": "^0.525.0",
     "next": "15.3.4",
     "node-cron": "^4.2.0",
     "nodemailer": "^7.0.4",

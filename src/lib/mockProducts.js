@@ -8,6 +8,14 @@ const mockProducts = [
     shipping: "Free",
     rating: 4.3,
     discount: "10% off",
+    cashbackOffers: [
+      "10% cashback with Amazon Pay ICICI Credit Card",
+      "₹500 instant discount on first order"
+    ],
+    bankOffers: [
+      "5% instant discount with HDFC Bank Credit Cards",
+      "No Cost EMI available for 6 months"
+    ]
   },
   {
     platform: "Flipkart",
@@ -18,6 +26,14 @@ const mockProducts = [
     shipping: "₹49",
     rating: 4.2,
     discount: "5% bank offer",
+    cashbackOffers: [
+      "8% cashback with Flipkart Axis Bank Credit Card",
+      "₹300 SuperCoins on purchase"
+    ],
+    bankOffers: [
+      "10% instant discount with SBI Credit Cards",
+      "Extra 5% off with Axis Bank Debit Cards"
+    ]
   },
   {
     platform: "Meesho",
@@ -28,6 +44,14 @@ const mockProducts = [
     shipping: "Free",
     rating: 4.1,
     discount: "No extra offers",
+    cashbackOffers: [
+      "12% cashback with Meesho wallet",
+      "₹200 instant discount on orders above ₹999"
+    ],
+    bankOffers: [
+      "No Cost EMI available with select banks",
+      "Extra ₹100 off with first-time UPI payment"
+    ]
   },
 ];
 

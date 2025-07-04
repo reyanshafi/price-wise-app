@@ -45,14 +45,14 @@ export default function SetAlertForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white p-6 rounded-xl shadow-md border border-gray-200 max-w-xl mx-auto mt-8 space-y-4"
+      className="bg-white/20 backdrop-blur-sm p-8 rounded-2xl border border-white/20 shadow-xl max-w-xl mx-auto mt-8 space-y-6"
     >
-      <h2 className="text-xl font-semibold text-gray-800">
+      <h2 className="text-2xl font-bold text-white flex items-center gap-2">
         🔔 Set a Price Drop Alert
       </h2>
 
       <div>
-        <label className="block text-sm font-medium text-gray-600 mb-1">
+        <label className="block text-sm font-medium text-blue-100 mb-1">
           Product URL
         </label>
         <input
@@ -60,13 +60,13 @@ export default function SetAlertForm() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           required
-          className="w-full border px-3 py-2 rounded-md"
+          className="w-full border-0 px-4 py-3 rounded-lg bg-white/80 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-200 shadow"
           placeholder="https://www.amazon.in/..."
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-600 mb-1">
+        <label className="block text-sm font-medium text-blue-100 mb-1">
           Target Price (₹)
         </label>
         <input
@@ -74,13 +74,13 @@ export default function SetAlertForm() {
           value={targetPrice}
           onChange={(e) => setTargetPrice(e.target.value)}
           required
-          className="w-full border px-3 py-2 rounded-md"
+          className="w-full border-0 px-4 py-3 rounded-lg bg-white/80 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-200 shadow"
           placeholder="12999"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-600 mb-1">
+        <label className="block text-sm font-medium text-blue-100 mb-1">
           Email Address
         </label>
         <input
@@ -88,7 +88,7 @@ export default function SetAlertForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full border px-3 py-2 rounded-md"
+          className="w-full border-0 px-4 py-3 rounded-lg bg-white/80 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-200 shadow"
           placeholder="you@example.com"
         />
       </div>
@@ -96,13 +96,13 @@ export default function SetAlertForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-medium transition"
+        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-xl font-semibold text-lg transition-all duration-300 shadow-xl hover:shadow-2xl"
       >
         {loading ? "Setting Alert..." : "Set Alert"}
       </button>
 
       {successMsg && (
-        <p className="text-green-600 text-sm mt-2">{successMsg}</p>
+        <p className="text-green-300 text-sm mt-2">{successMsg}</p>
       )}
     </form>
   );

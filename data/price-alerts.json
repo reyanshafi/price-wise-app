@@ -1,0 +1,58 @@
+[
+  {
+    "id": "mco5hhj3ks0y1ob9d5c",
+    "userId": "test@example.com",
+    "productUrl": "https://www.amazon.com/product/0",
+    "productTitle": "Test Laptop",
+    "currentPrice": 50000,
+    "targetPrice": 45000,
+    "platform": "Amazon",
+    "notificationMethod": "email",
+    "createdAt": "2025-07-04T01:43:20.319Z",
+    "isActive": true,
+    "notificationSent": false,
+    "lastChecked": "2025-07-04T01:43:20.319Z"
+  },
+  {
+    "id": "mco5ifgq3mioa3hsfqw",
+    "userId": "test@example.com",
+    "productUrl": "https://www.amazon.com/product/0",
+    "productTitle": "Test Laptop",
+    "currentPrice": 50000,
+    "targetPrice": 45000,
+    "platform": "Amazon",
+    "notificationMethod": "email",
+    "createdAt": "2025-07-04T01:44:04.298Z",
+    "isActive": true,
+    "notificationSent": false,
+    "lastChecked": "2025-07-04T01:44:04.298Z"
+  },
+  {
+    "id": "mco5ojpgxi5ofa7vun",
+    "userId": "test@example.com",
+    "productUrl": "https://www.amazon.com/product/0",
+    "productTitle": "Test Laptop for Alert",
+    "currentPrice": 50000,
+    "targetPrice": 35000,
+    "platform": "Amazon",
+    "notificationMethod": "email",
+    "createdAt": "2025-07-04T01:48:49.732Z",
+    "isActive": true,
+    "notificationSent": false,
+    "lastChecked": "2025-07-04T01:48:49.732Z"
+  },
+  {
+    "id": "mco6i958ndfqsrdv4zd",
+    "userId": "test@example.com",
+    "productUrl": "https://www.amazon.in/s?k=laptop",
+    "productTitle": "Test Laptop Alert",
+    "currentPrice": 50000,
+    "targetPrice": 45000,
+    "platform": "Amazon",
+    "notificationMethod": "email",
+    "createdAt": "2025-07-04T02:11:55.725Z",
+    "isActive": true,
+    "notificationSent": false,
+    "lastChecked": "2025-07-04T02:11:55.725Z"
+  }
+]

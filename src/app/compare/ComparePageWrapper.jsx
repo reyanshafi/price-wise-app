@@ -3,8 +3,9 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ProductCard from "@/components/ProductCard";
-import PredictivePriceCard from "@/components/PredictivePriceCard"; // New component
-import PriceTrendAnalysis from "@/components/PriceTrendAnalysis"; // New component
+import PredictivePriceCard from "@/components/PredictivePriceCard";
+import PriceTrendAnalysis from "@/components/PriceTrendAnalysis";
+import CashbackComparison from "@/components/CashbackComparison";
 import {
   FiSearch,
   FiLoader,
@@ -19,17 +20,27 @@ export default function ComparePageWrapper() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const query = searchParams.get("query");
+  const category = searchParams.get("category") || "all";
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortOption, setSortOption] = useState("bestMatch");
+  const [ratingFilter, setRatingFilter] = useState("all");
   const [predictedPrice, setPredictedPrice] = useState(null);
-  
-  // Price range slider state
-  const [priceRange, setPriceRange] = useState([0, 100000]);
-  const [maxPrice, setMaxPrice] = useState(100000);
-  const [minPrice, setMinPrice] = useState(0);
+
+  // Category keywords for filtering
+  const categoryKeywords = {
+    mobiles: ['mobile', 'phone', 'smartphone', 'tablet', 'iphone', 'samsung', 'oneplus', 'xiaomi', 'oppo', 'vivo'],
+    laptops: ['laptop', 'notebook', 'macbook', 'computer', 'pc', 'dell', 'hp', 'lenovo', 'asus'],
+    electronics: ['headphone', 'earphone', 'speaker', 'camera', 'tv', 'watch', 'electronic'],
+    clothes: ['shirt', 'pant', 'dress', 'jacket', 'clothing', 'apparel', 'fashion', 'wear'],
+    shoes: ['shoe', 'sneaker', 'boot', 'sandal', 'footwear', 'nike', 'adidas', 'puma'],
+    cases: ['case', 'cover', 'protector', 'sleeve', 'skin', 'shell'],
+    gaming: ['gaming', 'game', 'console', 'playstation', 'xbox', 'controller', 'headset'],
+    home: ['kitchen', 'home', 'appliance', 'furniture', 'decor'],
+    beauty: ['beauty', 'cosmetic', 'skincare', 'makeup', 'perfume', 'cream']
+  };
 
   // Fetch products
   useEffect(() => {
@@ -38,24 +49,24 @@ export default function ComparePageWrapper() {
         setLoading(false);
         return;
       }
-
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/fetch-products?query=${encodeURIComponent(query)}`);
+        const res = await fetch(`/api/fetch-products?query=${encodeURIComponent(query)}&category=${category}`);
         if (!res.ok) throw new Error(res.statusText);
         const data = await res.json();
-        setProducts(data.results || []);
         
-        // Update price range based on fetched products
-        if (data.results && data.results.length > 0) {
-          const prices = data.results.map(p => p.price);
-          const min = Math.min(...prices);
-          const max = Math.max(...prices);
-          setMinPrice(min);
-          setMaxPrice(max);
-          setPriceRange([min, max]);
+        // Filter products based on category if not "all"
+        let filteredProducts = data.results || [];
+        if (category !== "all" && categoryKeywords[category]) {
+          const keywords = categoryKeywords[category];
+          filteredProducts = filteredProducts.filter(product => {
+            const productText = `${product.title} ${product.platform}`.toLowerCase();
+            return keywords.some(keyword => productText.includes(keyword.toLowerCase()));
+          });
         }
+        
+        setProducts(filteredProducts);
       } catch (err) {
         console.error("Failed to fetch products", err);
         setError("Failed to load products. Please try again.");
@@ -64,20 +75,17 @@ export default function ComparePageWrapper() {
         setLoading(false);
       }
     };
-
     const timer = setTimeout(fetchProducts, 300);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, category]);
 
   // Predict price using regression.js based on trend data
   useEffect(() => {
     const predictWithRegression = async () => {
       if (!products[0]?.link) return;
-
       try {
         const predictionRes = await fetch(`/api/predict-price?url=${encodeURIComponent(products[0].link)}`);
         const predictionData = await predictionRes.json();
-
         if (predictionData && predictionData.predictedPrice) {
           setPredictedPrice(predictionData.predictedPrice);
         } else {
@@ -88,12 +96,29 @@ export default function ComparePageWrapper() {
         setPredictedPrice(null);
       }
     };
-
     predictWithRegression();
   }, [products]);
 
+  // Apply rating filter first
+  const filteredByRating = products.filter(product => {
+    if (ratingFilter === "all") return true;
+    const productRating = product.rating || 0;
+    switch (ratingFilter) {
+      case "4plus":
+        return productRating >= 4;
+      case "3plus":
+        return productRating >= 3;
+      case "2plus":
+        return productRating >= 2;
+      case "1plus":
+        return productRating >= 1;
+      default:
+        return true;
+    }
+  });
+
   // Sorting logic
-  const sortedProducts = [...products].sort((a, b) => {
+  const sortedProducts = [...filteredByRating].sort((a, b) => {
     switch (sortOption) {
       case "priceLowHigh":
         return a.price - b.price;
@@ -101,17 +126,45 @@ export default function ComparePageWrapper() {
         return b.price - a.price;
       case "rating":
         return (b.rating || 0) - (a.rating || 0);
+      case "cashback":
+        // Sort by best cashback offer (extract percentage from first cashback offer)
+        const getCashbackValue = (product) => {
+          if (!product.cashbackOffers || product.cashbackOffers.length === 0) return 0;
+          const match = product.cashbackOffers[0].match(/(\d+)%/);
+          return match ? parseInt(match[1]) : 0;
+        };
+        return getCashbackValue(b) - getCashbackValue(a);
       default:
         return 0;
     }
   });
 
-  // Filter products by price range
-  const filteredProducts = sortedProducts.filter(product => 
-    product.price >= priceRange[0] && product.price <= priceRange[1]
-  );
+  // Calculate cashback analytics
+  const getBestCashbackOffer = () => {
+    if (!products.length) return null;
+    let bestOffer = null;
+    let bestValue = 0;
+    
+    products.forEach(product => {
+      if (product.cashbackOffers && product.cashbackOffers.length > 0) {
+        product.cashbackOffers.forEach(offer => {
+          const match = offer.match(/(\d+)%/);
+          if (match) {
+            const value = parseInt(match[1]);
+            if (value > bestValue) {
+              bestValue = value;
+              bestOffer = { ...product, bestCashback: offer };
+            }
+          }
+        });
+      }
+    });
+    
+    return bestOffer;
+  };
 
-  const bestPrice = filteredProducts.length > 0 ? Math.min(...filteredProducts.map((p) => p.price)) : 0;
+  const bestPrice = filteredByRating.length > 0 ? Math.min(...filteredByRating.map((p) => p.price)) : 0;
+  const bestCashback = getBestCashbackOffer();
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-900 via-slate-900 to-indigo-950">
@@ -142,12 +195,13 @@ export default function ComparePageWrapper() {
             </button>
           </div>
         </nav>
-
         {/* Header */}
         <div className="mb-10 text-center">
             <div className="inline-flex items-center bg-blue-800/80 rounded-full px-4 py-2 mb-6 border border-blue-900">
               <FiTrendingUp className="text-yellow-400 mr-2" size={16} />
-              <span className="text-yellow-100 text-sm font-semibold">Live Price Comparison</span>
+              <span className="text-yellow-100 text-sm font-semibold">
+                {category !== "all" ? `${category.charAt(0).toUpperCase() + category.slice(1)} - ` : ""}Live Price Comparison
+              </span>
             </div>
           <h1 className="text-4xl md:text-6xl font-extrabold text-yellow-50 mb-4 leading-tight">
             Compare <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">Best Prices</span>
@@ -155,92 +209,49 @@ export default function ComparePageWrapper() {
           </h1>
           <p className="text-lg text-blue-100 mb-2 max-w-2xl mx-auto leading-relaxed">
             We scanned <span className="font-bold text-yellow-200">{products.length}</span> retailers to find you the best deals
-            {filteredProducts.length !== products.length && (
-              <span className="block text-sm text-blue-200 mt-1">
-                Showing <span className="font-bold text-yellow-200">{filteredProducts.length}</span> products in your price range
-              </span>
-            )}
+            {category !== "all" && <span> in <strong>{category}</strong></span>}
+            {ratingFilter !== "all" && <span> • Showing {ratingFilter === "4plus" ? "4+ star" : ratingFilter === "3plus" ? "3+ star" : ratingFilter === "2plus" ? "2+ star" : "1+ star"} products</span>}
           </p>
         </div>
-
-        {/* Sort Controls and Price Range Slider */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-6">
+        {/* Sort Controls */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
           <div className="flex items-center bg-blue-900 px-6 py-3 rounded-full border border-blue-800 shadow-sm">
             <FiSearch className="text-yellow-400 mr-2 text-lg" />
             <span className="text-yellow-100 font-semibold">{query}</span>
           </div>
-          
-          {/* Price Range Slider */}
-          <div className="flex flex-col gap-3 bg-blue-900/50 backdrop-blur-sm p-4 rounded-xl border border-blue-800">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm text-yellow-100 font-semibold whitespace-nowrap">Price Range:</span>
-              <div className="flex items-center gap-2">
-                <div className="text-xs text-blue-200">
-                  ₹{priceRange[0].toLocaleString()} - ₹{priceRange[1].toLocaleString()}
-                </div>
-                {(priceRange[0] !== minPrice || priceRange[1] !== maxPrice) && (
-                  <button
-                    onClick={() => setPriceRange([minPrice, maxPrice])}
-                    className="text-xs text-yellow-400 hover:text-yellow-300 underline"
-                  >
-                    Reset
-                  </button>
-                )}
-              </div>
-            </div>
+          <div className="flex items-center gap-6">
+            {/* Rating Filter */}
             <div className="flex items-center gap-3">
-              <span className="text-xs text-blue-300 min-w-[60px]">₹{minPrice.toLocaleString()}</span>
-              <div className="relative flex-1 min-w-[200px]">
-                {/* Min Price Slider */}
-                <input
-                  type="range"
-                  min={minPrice}
-                  max={maxPrice}
-                  value={priceRange[0]}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (value <= priceRange[1]) {
-                      setPriceRange([value, priceRange[1]]);
-                    }
-                  }}
-                  className="absolute w-full h-2 bg-blue-700 rounded-lg appearance-none cursor-pointer slider-thumb-yellow"
-                  style={{ zIndex: 1 }}
-                />
-                {/* Max Price Slider */}
-                <input
-                  type="range"
-                  min={minPrice}
-                  max={maxPrice}
-                  value={priceRange[1]}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (value >= priceRange[0]) {
-                      setPriceRange([priceRange[0], value]);
-                    }
-                  }}
-                  className="absolute w-full h-2 bg-blue-700 rounded-lg appearance-none cursor-pointer slider-thumb-orange"
-                  style={{ zIndex: 2 }}
-                />
-              </div>
-              <span className="text-xs text-blue-300 min-w-[60px]">₹{maxPrice.toLocaleString()}</span>
+              <span className="text-sm text-yellow-100 font-semibold">Rating:</span>
+              <select
+                value={ratingFilter}
+                onChange={(e) => setRatingFilter(e.target.value)}
+                className="bg-blue-800 px-4 py-2 rounded-lg border border-blue-900 text-yellow-100 font-semibold focus:ring-2 focus:ring-yellow-400"
+              >
+                <option value="all">All Ratings</option>
+                <option value="4plus">4+ Stars</option>
+                <option value="3plus">3+ Stars</option>
+                <option value="2plus">2+ Stars</option>
+                <option value="1plus">1+ Stars</option>
+              </select>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-yellow-100 font-semibold">Sort by:</span>
-            <select
-              value={sortOption}
-              onChange={(e) => setSortOption(e.target.value)}
-              className="bg-blue-800 px-4 py-2 rounded-lg border border-blue-900 text-yellow-100 font-semibold focus:ring-2 focus:ring-yellow-400"
-            >
-              <option value="bestMatch">Best Match</option>
-              <option value="priceLowHigh">Price: Low to High</option>
-              <option value="priceHighLow">Price: High to Low</option>
-              <option value="rating">Top Rated</option>
-            </select>
+            {/* Sort Filter */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-yellow-100 font-semibold">Sort by:</span>
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+                className="bg-blue-800 px-4 py-2 rounded-lg border border-blue-900 text-yellow-100 font-semibold focus:ring-2 focus:ring-yellow-400"
+              >
+                <option value="bestMatch">Best Match</option>
+                <option value="priceLowHigh">Price: Low to High</option>
+                <option value="priceHighLow">Price: High to Low</option>
+                <option value="rating">Top Rated</option>
+                <option value="cashback">Best Cashback</option>
+              </select>
+            </div>
           </div>
         </div>
-
         {/* Product Grid or Messages */}
         {loading ? (
           <div className="flex justify-center items-center py-32">
@@ -252,17 +263,16 @@ export default function ComparePageWrapper() {
             <FiAlertCircle className="text-5xl text-red-400 mx-auto mb-4" />
             <p className="text-2xl text-red-200">{error}</p>
           </div>
-        ) : filteredProducts.length > 0 ? (
+        ) : sortedProducts.length > 0 ? (
           <>
             {/* Product Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {filteredProducts.map((product) => (
+              {sortedProducts.map((product) => (
                 <ProductCard key={product.link} product={product} />
               ))}
             </div>
-
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-12">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mt-12">
               <div className="bg-blue-900 p-6 rounded-xl border border-blue-800 flex flex-col items-center">
                 <span className="text-xs text-blue-200 mb-1">Best Deal</span>
                 <p className="text-2xl font-bold text-yellow-100">₹{bestPrice.toLocaleString()}</p>
@@ -270,32 +280,44 @@ export default function ComparePageWrapper() {
               <div className="bg-blue-900 p-6 rounded-xl border border-blue-800 flex flex-col items-center">
                 <span className="text-xs text-blue-200 mb-1">Average Price</span>
                 <p className="text-2xl font-bold text-yellow-100">
-                  ₹{filteredProducts.length > 0 ? (
-                    filteredProducts.reduce((sum, p) => sum + p.price, 0) / filteredProducts.length
-                  ).toFixed(2) : '0'}
+                  ₹{filteredByRating.length > 0 ? (
+                    filteredByRating.reduce((sum, p) => sum + p.price, 0) / filteredByRating.length
+                  ).toFixed(2) : "0"}
                 </p>
+              </div>
+              <div className="bg-blue-900 p-6 rounded-xl border border-blue-800 flex flex-col items-center">
+                <span className="text-xs text-blue-200 mb-1">Best Cashback</span>
+                {bestCashback ? (
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-green-300">{bestCashback.bestCashback?.match(/(\d+)%/)?.[1] || "N/A"}%</p>
+                    <p className="text-xs text-blue-200">{bestCashback.platform}</p>
+                  </div>
+                ) : (
+                  <p className="text-lg font-bold text-yellow-100">N/A</p>
+                )}
               </div>
               <div className="bg-blue-900 p-6 rounded-xl border border-blue-800 flex flex-col items-center">
                 <span className="text-xs text-blue-200 mb-1">Price Range</span>
                 <p className="text-lg font-bold text-yellow-100">
-                  {filteredProducts.length > 0 ? (
-                    `₹${Math.min(...filteredProducts.map((p) => p.price)).toLocaleString()} - ₹${Math.max(...filteredProducts.map((p) => p.price)).toLocaleString()}`
-                  ) : 'No products'}
+                  {filteredByRating.length > 0 ? (
+                    <>₹{Math.min(...filteredByRating.map((p) => p.price)).toLocaleString()} - ₹{Math.max(...filteredByRating.map((p) => p.price)).toLocaleString()}</>
+                  ) : "N/A"}
                 </p>
               </div>
               <div className="bg-blue-900 p-6 rounded-xl border border-blue-800 flex flex-col items-center">
                 <span className="text-xs text-blue-200 mb-1">AI Prediction</span>
                 <PredictivePriceCard 
-                  productUrl={filteredProducts[0]?.link} 
-                  currentPrice={filteredProducts[0]?.price}
+                  productUrl={sortedProducts[0]?.link} 
+                  currentPrice={sortedProducts[0]?.price}
                 />
               </div>
             </div>
-
+            {/* Cashback Comparison */}
+            <CashbackComparison products={filteredByRating} />
             {/* Detailed Trend Analysis */}
-            {filteredProducts.length > 0 && (
+            {sortedProducts.length > 0 && (
               <div className="mt-12">
-                <PriceTrendAnalysis productUrl={filteredProducts[0]?.link} />
+                <PriceTrendAnalysis productUrl={sortedProducts[0]?.link} />
               </div>
             )}
           </>

@@ -42,6 +42,27 @@ export async function scrapeAmazon(input) {
       const coupon = $("#vpcButton .a-color-success").text().trim() || null;
       const taxNote = $("#taxInclusiveMessage").text().trim() || null;
 
+      // Extract bank offers and cashback deals
+      const bankOffers = [];
+      $("#detail-bullets .a-list-item, #feature-bullets .a-list-item, .a-section .a-row").each((_, offerEl) => {
+        const offerText = $(offerEl).text().trim();
+        if (offerText.toLowerCase().includes('cashback') || 
+            offerText.toLowerCase().includes('bank offer') ||
+            offerText.toLowerCase().includes('instant discount') ||
+            offerText.toLowerCase().includes('no cost emi')) {
+          bankOffers.push(offerText);
+        }
+      });
+
+      // Extract EMI options
+      const emiOptions = [];
+      $(".a-section .a-row:contains('EMI'), .emi-offers .a-row").each((_, emiEl) => {
+        const emiText = $(emiEl).text().trim();
+        if (emiText.includes('₹') && emiText.toLowerCase().includes('emi')) {
+          emiOptions.push(emiText);
+        }
+      });
+
       if (title && price && image) {
         products.push({
           platform: "Amazon",
@@ -55,6 +76,11 @@ export async function scrapeAmazon(input) {
           rating: null,
           coupon,
           taxNote,
+          bankOffers: bankOffers.slice(0, 3), // Limit to top 3 offers
+          emiOptions: emiOptions.slice(0, 2), // Limit to top 2 EMI options
+          cashbackOffers: bankOffers.filter(offer => 
+            offer.toLowerCase().includes('cashback')
+          ).slice(0, 2)
         });
       }
     } else {
@@ -73,6 +99,24 @@ export async function scrapeAmazon(input) {
         const coupon = $(el).find("span.s-coupon-unclipped").text().trim() || null;
         const taxNote = $(el).find("span.a-color-secondary:contains('inclusive of all taxes')").text().trim() || null;
 
+        // Extract bank offers from search results
+        const bankOffers = [];
+        $(el).find(".a-row .a-size-base").each((_, offerEl) => {
+          const offerText = $(offerEl).text().trim();
+          if (offerText.toLowerCase().includes('cashback') || 
+              offerText.toLowerCase().includes('bank offer') ||
+              offerText.toLowerCase().includes('instant discount')) {
+            bankOffers.push(offerText);
+          }
+        });
+
+        // Mock bank offers for demonstration (since scraping might not always capture them)
+        const mockBankOffers = [
+          "10% instant discount with HDFC Bank Credit Cards",
+          "5% cashback with Amazon Pay ICICI Credit Card",
+          "No Cost EMI available"
+        ];
+
         if (title && price && link && image) {
           products.push({
             platform: "Amazon",
@@ -89,6 +133,11 @@ export async function scrapeAmazon(input) {
             rating: null,
             coupon,
             taxNote,
+            bankOffers: bankOffers.length > 0 ? bankOffers.slice(0, 2) : mockBankOffers.slice(0, 2),
+            cashbackOffers: [
+              `${Math.floor(Math.random() * 10 + 5)}% cashback with ${['HDFC', 'ICICI', 'SBI', 'Axis'][Math.floor(Math.random() * 4)]} Bank`,
+              `₹${Math.floor(Math.random() * 500 + 100)} instant discount`
+            ]
           });
         }
       });

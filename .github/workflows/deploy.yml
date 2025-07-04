@@ -1,0 +1,47 @@
+# File: .github/workflows/deploy.yml
+
+name: Deploy Next.js App
+
+on:
+  push:
+    branches:
+      - main  # or your deployment branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: 📦 Install Dependencies
+        run: npm install
+
+      - name: ⚙️ Build Project
+        run: npm run build
+
+      - name: ✅ Run Tests (optional)
+        run: npm run test
+
+      # Optional: Upload production artifacts (if needed)
+      # - name: 📤 Upload Build Output
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: nextjs-build
+      #     path: .next
+
+      # Optional: Deploy step (Docker/AWS/Vercel etc.)
+      # Example: SCP to AWS EC2 (requires SSH secrets set in repo settings)
+      # - name: 🚀 Deploy to AWS EC2
+      #   run: |
+      #     echo "$SSH_KEY" > key.pem
+      #     chmod 400 key.pem
+      #     rsync -avz -e "ssh -i key.pem -o StrictHostKeyChecking=no" ./ ubuntu@your-ec2-ip:/var/www/your-app
+      #   env:
+      #     SSH_KEY: ${{ secrets.EC2_SSH_KEY }}

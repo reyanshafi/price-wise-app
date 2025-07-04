@@ -1,1 +1,71 @@
 @import "tailwindcss";
+
+/* Custom Range Slider Styles */
+.slider-thumb-yellow::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #fbbf24;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.slider-thumb-orange::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #f97316;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Firefox */
+.slider-thumb-yellow::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #fbbf24;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.slider-thumb-orange::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #f97316;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Range track */
+input[type="range"] {
+  background: transparent;
+}
+
+input[type="range"]::-webkit-slider-track {
+  height: 8px;
+  background: #1e40af;
+  border-radius: 4px;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 8px;
+  background: #1e40af;
+  border-radius: 4px;
+  border: none;
+}
+
+input[type="range"]:focus {
+  outline: none;
+}
+
+input[type="range"]:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.3);
+}

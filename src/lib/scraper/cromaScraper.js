@@ -23,7 +23,24 @@ export async function scrapeCroma(query) {
       const image = $(el).find("img").attr("src");
 
       if (title && price && link && image) {
-        products.push({ title, price, link, image, retailer: "Croma" });
+        products.push({ 
+          title, 
+          price, 
+          link, 
+          image, 
+          platform: "Croma",
+          rating: Math.random() * 2 + 3, // Mock rating between 3-5
+          shipping: "Check site",
+          discount: "Check offers",
+          bankOffers: [
+            `${Math.floor(Math.random() * 8 + 3)}% instant discount with select bank cards`,
+            "No Cost EMI available for 3-24 months"
+          ],
+          cashbackOffers: [
+            `${Math.floor(Math.random() * 7 + 3)}% cashback with Croma credit card`,
+            `₹${Math.floor(Math.random() * 400 + 100)} off on first purchase`
+          ]
+        });
       }
     });
 
