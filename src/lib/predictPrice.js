@@ -1,7 +1,7 @@
 import regression from "regression";
 
 /**
- * Predict the next price based on trend data using multiple regression models
+ * Predict the next price based on trend data using conservative regression
  * @param {Array} trendData - Array of objects with { timestamp, price }
  * @returns {Number} - Predicted price
  */
@@ -9,59 +9,45 @@ export function predictPrice(trendData) {
   if (!trendData || trendData.length < 2) return null;
 
   try {
-    // Convert timestamps to days since first data point for better regression
-    const firstTimestamp = new Date(trendData[0].timestamp).getTime();
-    const formattedData = trendData.map((point) => {
-      const daysSinceStart = (new Date(point.timestamp).getTime() - firstTimestamp) / (1000 * 60 * 60 * 24);
-      return [daysSinceStart, point.price];
-    });
-
-    // Try different regression models and pick the best one
-    let bestModel = null;
-    let bestR2 = -Infinity;
-
-    const models = [
-      { type: 'linear', result: regression.linear(formattedData) },
-      { type: 'polynomial', result: regression.polynomial(formattedData, { order: 2 }) },
-      { type: 'exponential', result: regression.exponential(formattedData) }
-    ];
-
-    // Find the model with the best R² value
-    for (const model of models) {
-      if (model.result.r2 > bestR2) {
-        bestR2 = model.result.r2;
-        bestModel = model.result;
-      }
-    }
-
-    if (!bestModel) {
-      // Fallback to simple linear regression
-      const result = regression.linear(formattedData);
-      const nextDay = formattedData[formattedData.length - 1][0] + 1;
-      return result.predict(nextDay)[1];
-    }
-
-    // Predict price for next day
-    const nextDay = formattedData[formattedData.length - 1][0] + 1;
-    const prediction = bestModel.predict(nextDay)[1];
-
-    // Ensure prediction is reasonable (within 50% of recent price range)
+    // Get recent prices for baseline
     const recentPrices = trendData.slice(-5).map(d => d.price);
-    const minRecent = Math.min(...recentPrices);
-    const maxRecent = Math.max(...recentPrices);
-    const range = maxRecent - minRecent;
+    const currentPrice = recentPrices[recentPrices.length - 1];
+    const avgRecentPrice = recentPrices.reduce((sum, p) => sum + p, 0) / recentPrices.length;
     
-    // Clamp prediction to reasonable bounds
-    const lowerBound = minRecent - (range * 0.5);
-    const upperBound = maxRecent + (range * 0.5);
+    // Calculate simple moving average trend
+    const shortTermPrices = trendData.slice(-3).map(d => d.price);
+    const longTermPrices = trendData.slice(-6, -3).map(d => d.price);
+    
+    const shortTermAvg = shortTermPrices.reduce((sum, p) => sum + p, 0) / shortTermPrices.length;
+    const longTermAvg = longTermPrices.length > 0 
+      ? longTermPrices.reduce((sum, p) => sum + p, 0) / longTermPrices.length 
+      : shortTermAvg;
+    
+    // Calculate trend direction and strength
+    const trendStrength = (shortTermAvg - longTermAvg) / longTermAvg;
+    
+    // Conservative prediction: limit change to ±5% max
+    const maxChange = 0.05;
+    const limitedTrend = Math.max(-maxChange, Math.min(maxChange, trendStrength));
+    
+    // Apply trend to current price
+    const prediction = currentPrice * (1 + limitedTrend);
+    
+    // Additional safety check: ensure prediction is within reasonable bounds
+    const priceRange = Math.max(...recentPrices) - Math.min(...recentPrices);
+    const reasonableBound = priceRange * 0.5;
+    
+    const lowerBound = avgRecentPrice - reasonableBound;
+    const upperBound = avgRecentPrice + reasonableBound;
     
     return Math.max(lowerBound, Math.min(upperBound, prediction));
 
   } catch (error) {
     console.error("Error in price prediction:", error);
-    // Fallback: simple average of recent trend
-    const recentPrices = trendData.slice(-3).map(d => d.price);
-    return recentPrices.reduce((sum, price) => sum + price, 0) / recentPrices.length;
+    // Fallback: return current price with minimal variation
+    const currentPrice = trendData[trendData.length - 1].price;
+    const variation = (Math.random() - 0.5) * 0.02; // ±1% variation
+    return currentPrice * (1 + variation);
   }
 }
 

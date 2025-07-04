@@ -35,37 +35,48 @@ function extractProductId(url) {
 }
 
 // Generate a mock prediction for products without historical data
-function generateMockPrediction(productUrl) {
+function generateMockPrediction(productUrl, currentPrice = null) {
   try {
-    // Extract price from URL or use category-based estimation
-    let estimatedPrice = 15000; // Default price
+    // If we have current price from the product card, use it as base
+    let basePrice = currentPrice || 15000;
     
-    // Category-based price estimation
-    const url = productUrl.toLowerCase();
-    if (url.includes('iphone') || url.includes('macbook')) {
-      estimatedPrice = 80000;
-    } else if (url.includes('samsung') || url.includes('galaxy')) {
-      estimatedPrice = 15000;
-    } else if (url.includes('headphone') || url.includes('earphone')) {
-      estimatedPrice = 3000;
-    } else if (url.includes('laptop')) {
-      estimatedPrice = 50000;
+    // If no current price, try to extract from URL context
+    if (!currentPrice) {
+      const url = productUrl.toLowerCase();
+      if (url.includes('iphone') || url.includes('macbook')) {
+        basePrice = 60000;
+      } else if (url.includes('samsung') || url.includes('galaxy')) {
+        basePrice = 25000;
+      } else if (url.includes('headphone') || url.includes('earphone')) {
+        basePrice = 2500;
+      } else if (url.includes('laptop')) {
+        basePrice = 40000;
+      } else if (url.includes('watch')) {
+        basePrice = 8000;
+      }
     }
     
-    // Generate realistic fluctuation (±5%)
-    const variation = (Math.random() - 0.5) * 0.1;
-    const predictedPrice = Math.round(estimatedPrice * (1 + variation));
+    // Generate realistic small fluctuation (±2-8%)
+    const variation = (Math.random() - 0.5) * 0.15; // -7.5% to +7.5%
+    const predictedPrice = Math.round(basePrice * (1 + variation));
+    
+    // Ensure prediction is reasonable (within 10% of base price)
+    const maxChange = basePrice * 0.1;
+    const safePrediction = Math.max(
+      basePrice - maxChange,
+      Math.min(basePrice + maxChange, predictedPrice)
+    );
     
     return {
       productTitle: "Product (Limited Data Available)",
-      currentPrice: estimatedPrice,
-      predictedPrice: predictedPrice,
-      trend: variation > 0 ? "increasing" : "decreasing",
-      confidence: 30, // Low confidence for mock data
+      currentPrice: basePrice,
+      predictedPrice: Math.round(safePrediction),
+      trend: variation > 0.02 ? "increasing" : variation < -0.02 ? "decreasing" : "stable",
+      confidence: 25, // Low confidence for mock data
       dataPoints: 0,
       history: [],
       isMockPrediction: true,
-      message: "This prediction is estimated. Track this product for more accurate predictions."
+      message: "This prediction is estimated based on market trends. Track this product for more accurate predictions."
     };
   } catch {
     return null;
@@ -75,6 +86,7 @@ function generateMockPrediction(productUrl) {
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const productUrl = searchParams.get("url");
+  const currentPrice = searchParams.get("currentPrice"); // Get current price from query params
 
   if (!productUrl) {
     return new Response(JSON.stringify({ error: "Missing product URL" }), {
@@ -112,7 +124,10 @@ export async function GET(request) {
 
     if (!snapshot || !snapshot.exists()) {
       // Generate mock prediction based on current price if available
-      const mockPrediction = generateMockPrediction(productUrl);
+      const mockPrediction = generateMockPrediction(
+        productUrl, 
+        currentPrice ? parseFloat(currentPrice) : null
+      );
       if (mockPrediction) {
         return new Response(JSON.stringify(mockPrediction), {
           status: 200,

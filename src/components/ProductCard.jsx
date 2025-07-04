@@ -42,7 +42,9 @@ export default function ProductCard({ product }) {
     
     setLoadingPrediction(true);
     try {
-      const response = await fetch(`/api/predict-price?url=${encodeURIComponent(link)}`);
+      const response = await fetch(
+        `/api/predict-price?url=${encodeURIComponent(link)}&currentPrice=${price}`
+      );
       const data = await response.json();
       setPredictionData(data);
     } catch (error) {
