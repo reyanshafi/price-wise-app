@@ -14,7 +14,7 @@ export async function scrapeSnapdeal(query) {
     const $ = cheerio.load(html);
     const results = [];
 
-    $(".product-tuple-listing").slice(0, 5).each((_, el) => {
+    $(".product-tuple-listing").slice(0, 8).each((_, el) => {
       const title = $(el).find(".product-title").text().trim();
       const priceText = $(el).find(".product-price").text().replace(/[^\d]/g, "");
       const price = parseFloat(priceText);

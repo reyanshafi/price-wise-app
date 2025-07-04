@@ -84,7 +84,8 @@ export async function scrapeAmazon(input) {
         });
       }
     } else {
-      $(".s-main-slot div[data-asin]").each((_, el) => {
+      // Limit to first 15 results and prioritize relevance
+      $(".s-main-slot div[data-asin]").slice(0, 15).each((_, el) => {
         const title = $(el).find("h2 span").text().trim();
         const linkPart = $(el).find("a.a-link-normal.s-no-outline").attr("href");
         const link = linkPart ? `https://www.amazon.in${linkPart}` : null;

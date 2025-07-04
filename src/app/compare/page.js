@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import ProductCard from "@/components/ProductCard";
 import PredictivePriceCard from "@/components/PredictivePriceCard"; // New component
 import PriceTrendAnalysis from "@/components/PriceTrendAnalysis"; // New component
@@ -15,7 +15,7 @@ import {
   FiBarChart2,
 } from "react-icons/fi";
 
-export default function ComparePageWrapper() {
+function ComparePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const query = searchParams.get("query");
@@ -309,5 +309,28 @@ export default function ComparePageWrapper() {
         )}
       </div>
     </main>
+  );
+}
+
+// Loading component for Suspense fallback
+function LoadingFallback() {
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-blue-900 via-slate-900 to-indigo-950">
+      <div className="relative z-10 container mx-auto px-6 py-16">
+        <div className="flex justify-center items-center py-32">
+          <FiLoader className="animate-spin text-4xl text-blue-400" />
+          <span className="ml-4 text-2xl text-white">Loading...</span>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+// Main component that wraps the content with Suspense
+export default function ComparePageWrapper() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ComparePageContent />
+    </Suspense>
   );
 }
