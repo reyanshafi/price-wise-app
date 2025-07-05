@@ -34,3 +34,40 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Price Alert Automation
+
+This application includes an automated price alert system that runs on a scheduled basis:
+
+### How It Works
+
+1. **Alert Setup**: Users set price alerts through the application UI
+2. **Scheduled Checks**: The system automatically checks product prices against the user's target prices every 6 hours
+3. **Notification**: When a target price is reached, the system sends an email notification to the user
+
+### Vercel Deployment Configuration
+
+The price alert automation is implemented using Vercel Cron Jobs:
+
+1. **API Route**: `/api/cron` handles the scheduled price checks
+2. **Cron Schedule**: Configured in `vercel.json` to run every 6 hours
+3. **Environment Variables**: Make sure to set these in your Vercel project settings:
+   - `EMAIL_USER`: The email address used to send notifications
+   - `EMAIL_PASS`: App password for the email account (use app-specific password if 2FA is enabled)
+   - `CRON_SECRET` (optional): A secret token to protect the cron endpoint
+
+### Manual Trigger
+
+You can manually trigger the price alert check locally using:
+
+```bash
+npm run check-alerts
+```
+
+### Security
+
+To secure your cron endpoint from unauthorized access, set a `CRON_SECRET` environment variable in Vercel and include it when calling the endpoint:
+
+```
+https://your-app.vercel.app/api/cron?secret=your-secret-token
+```

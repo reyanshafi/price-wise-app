@@ -1,5 +1,9 @@
 import dotenv from "dotenv";
-dotenv.config({ path: '.env.local' });
+// In serverless environment, we don't need to load dotenv as Vercel manages environment variables
+// Only load dotenv when running locally (e.g., when the script is called directly)
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: '.env.local' });
+}
 
 import { db } from "../src/lib/firebase.js";
 
