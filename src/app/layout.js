@@ -1,5 +1,6 @@
 import "./globals.css";
 import Link from "next/link";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 export const metadata = {
   title: "Price-Wise",
@@ -12,9 +13,9 @@ export default function RootLayout({ children }) {
       <body
         // className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-       
-
-        <div>{children}</div>
+        <AuthProvider>
+          <div>{children}</div>
+        </AuthProvider>
       </body>
     </html>
   );

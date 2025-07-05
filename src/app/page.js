@@ -21,21 +21,38 @@ import {
   FiHome,
   FiHeart,
   FiTruck,
-  FiCoffee
+  FiCoffee,
+  FiUser,
+  FiLogOut
 } from "react-icons/fi";
 import ProductCard from "@/components/ProductCard";
 import ShoppingAssistant from "@/components/ShoppingAssistant";
+import AuthModal from "@/components/AuthModal";
+import { useAuth } from "@/contexts/AuthContext";
+import { AnalyticsService } from "@/services/analyticsService";
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const router = useRouter();
+  const { user, logout } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
     
     setIsLoading(true);
+    
+    // Track search if user is logged in
+    if (user) {
+      try {
+        await AnalyticsService.trackSearch(user.uid, searchTerm.trim(), 0);
+      } catch (error) {
+        console.error('Error tracking search:', error);
+      }
+    }
+    
     router.push(`/compare?query=${encodeURIComponent(searchTerm.trim())}`);
   };
 
@@ -50,9 +67,19 @@ export default function HomePage() {
     { name: 'Food & Beverages', icon: FiCoffee, color: 'bg-gradient-to-r from-yellow-500 to-yellow-600', searchTerm: 'food items' }
   ];
 
-  const handleCategoryClick = (category) => {
+  const handleCategoryClick = async (category) => {
     setSearchTerm(category.searchTerm);
     setIsLoading(true);
+    
+    // Track category search if user is logged in
+    if (user) {
+      try {
+        await AnalyticsService.trackSearch(user.uid, category.searchTerm, 0);
+      } catch (error) {
+        console.error('Error tracking category search:', error);
+      }
+    }
+    
     router.push(`/compare?query=${encodeURIComponent(category.searchTerm)}`);
   };
 
@@ -115,15 +142,48 @@ export default function HomePage() {
         
         <div className="relative z-10 container mx-auto px-6 py-20">
           {/* Navigation */}
-          <nav className="flex items-center justify-between mb-16">
+          <nav className="flex items-center justify-between mb-12 sm:mb-16">
             <div className="flex items-center space-x-3">
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 shadow-lg">
-                <FiBarChart2 size={28} className="text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2 sm:p-3 shadow-lg">
+                <FiBarChart2 size={24} className="text-white sm:w-7 sm:h-7" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">PriceWise</h1>
-                <p className="text-blue-100 text-sm font-medium">Smart Price Intelligence</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-white">PriceWise</h1>
+                <p className="text-blue-100 text-xs sm:text-sm font-medium">Smart Price Intelligence</p>
               </div>
+            </div>
+            
+            <div className="flex items-center gap-2 sm:gap-3">
+              {user ? (
+                <>
+                  <button
+                    onClick={() => router.push("/analytics")}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 sm:px-6 py-2 rounded-full border border-yellow-500 transition-all duration-300 flex items-center gap-1 sm:gap-2 text-sm sm:text-base"
+                  >
+                    <FiBarChart2 size={16} className="sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Analytics</span>
+                  </button>
+                  <div className="hidden md:flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-full border border-white/20">
+                    <FiUser className="text-white" size={16} />
+                    <span className="text-white text-sm">{user.displayName || user.email}</span>
+                  </div>
+                  <button
+                    onClick={logout}
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-full border border-red-500 transition-all duration-300 flex items-center gap-1 sm:gap-2 text-sm sm:text-base"
+                  >
+                    <FiLogOut size={16} className="sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Sign Out</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 sm:px-6 py-2 rounded-full border border-yellow-500 transition-all duration-300 flex items-center gap-1 sm:gap-2 text-sm sm:text-base"
+                >
+                  <FiUser size={16} className="sm:w-4 sm:h-4" />
+                  <span>Sign In</span>
+                </button>
+              )}
             </div>
           </nav>
 
@@ -172,7 +232,7 @@ export default function HomePage() {
                     className={`flex-1 flex items-center justify-center gap-3 py-4 px-8 rounded-xl font-semibold text-lg transition-all duration-300 ${
                       isLoading || !searchTerm.trim()
                         ? 'bg-gray-400 cursor-not-allowed text-white'
-                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                        : 'bg-gradient-to-r from-orange-600 to-orange-800 hover:from-orange-700 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
                     }`}
                   >
                     {isLoading ? (
@@ -359,6 +419,13 @@ export default function HomePage() {
 
       {/* Floating Action Buttons */}
       <ShoppingAssistant />
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        initialMode="login"
+      />
     </div>
   );
 }

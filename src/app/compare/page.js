@@ -6,6 +6,9 @@ import ProductCard from "@/components/ProductCard";
 import PredictivePriceCard from "@/components/PredictivePriceCard";
 import PriceTrendAnalysis from "@/components/PriceTrendAnalysis";
 import ShoppingAssistant from "@/components/ShoppingAssistant";
+import AuthModal from "@/components/AuthModal";
+import { useAuth } from "@/contexts/AuthContext";
+import { AnalyticsService } from "@/services/analyticsService";
 import {
   FiSearch,
   FiLoader,
@@ -14,18 +17,25 @@ import {
   FiArrowLeft,
   FiHome,
   FiBarChart2,
+  FiUser,
+  FiLogOut,
+  FiMenu,
+  FiX,
 } from "react-icons/fi";
 
 function ComparePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const query = searchParams.get("query");
+  const { user, logout } = useAuth();
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortOption, setSortOption] = useState("bestMatch");
   const [predictedPrice, setPredictedPrice] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Price range slider state
   const [priceRange, setPriceRange] = useState([0, 100000]);
@@ -48,6 +58,11 @@ function ComparePageContent() {
         const data = await res.json();
         setProducts(data.results || []);
         
+        // Track user search if logged in
+        if (user && data.results) {
+          await AnalyticsService.trackSearch(user.uid, query, data.results.length);
+        }
+        
         // Update price range based on fetched products
         if (data.results && data.results.length > 0) {
           const prices = data.results.map(p => p.price);
@@ -68,7 +83,18 @@ function ComparePageContent() {
 
     const timer = setTimeout(fetchProducts, 300);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, user]);
+
+  // Track price comparison when products are loaded
+  useEffect(() => {
+    const trackComparison = async () => {
+      if (user && products.length > 0 && query) {
+        await AnalyticsService.trackPriceComparison(user.uid, query, products);
+      }
+    };
+
+    trackComparison();
+  }, [products, user, query]);
 
   // Predict price using regression.js based on trend data
   useEffect(() => {
@@ -118,31 +144,128 @@ function ComparePageContent() {
     <main className="min-h-screen bg-gradient-to-br from-blue-900 via-slate-900 to-indigo-950">
       <div className="relative z-10 container mx-auto px-6 py-16">
         {/* Navigation */}
-        <nav className="flex items-center justify-between mb-12">
+        <nav className="flex items-center justify-between mb-8 sm:mb-12">
           <div className="flex items-center space-x-3">
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-              <FiBarChart2 size={28} className="text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2 sm:p-3">
+              <FiBarChart2 size={24} className="text-white sm:w-7 sm:h-7" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">PriceWise</h1>
-              <p className="text-blue-100 text-sm">Smart Price Intelligence</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-white">PriceWise</h1>
+              <p className="text-blue-100 text-xs sm:text-sm">Smart Price Intelligence</p>
             </div>
           </div>
-          <div className="flex gap-3">
+          
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-3">
             <button
               onClick={() => router.back()}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-6 py-2 rounded-full border border-white/20 transition-all duration-300 flex items-center gap-2"
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-4 sm:px-6 py-2 rounded-full border border-white/20 transition-all duration-300 flex items-center gap-2"
             >
               <FiArrowLeft /> Back
             </button>
             <button
               onClick={() => router.push("/")}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-6 py-2 rounded-full border border-white/20 transition-all duration-300 flex items-center gap-2"
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-4 sm:px-6 py-2 rounded-full border border-white/20 transition-all duration-300 flex items-center gap-2"
             >
               <FiHome /> Home
             </button>
+            
+            {user ? (
+              <>
+                <button
+                  onClick={() => router.push("/analytics")}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 sm:px-6 py-2 rounded-full border border-yellow-500 transition-all duration-300 flex items-center gap-2"
+                >
+                  <FiBarChart2 /> Analytics
+                </button>
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+                  <FiUser className="text-white" />
+                  <span className="text-white text-sm hidden lg:block">{user.displayName || user.email}</span>
+                </div>
+                <button
+                  onClick={logout}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full border border-red-500 transition-all duration-300 flex items-center gap-2"
+                >
+                  <FiLogOut />
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 sm:px-6 py-2 rounded-full border border-yellow-500 transition-all duration-300 flex items-center gap-2"
+              >
+                <FiUser /> Sign In
+              </button>
+            )}
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden bg-white/10 backdrop-blur-sm text-white p-2 rounded-full border border-white/20"
+          >
+            {isMobileMenuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
+          </button>
         </nav>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 mb-8 p-4 space-y-3">
+            {user && (
+              <div className="flex items-center gap-2 text-white text-sm pb-3 border-b border-white/20">
+                <FiUser />
+                <span className="truncate">{user.displayName || user.email}</span>
+              </div>
+            )}
+            <button
+              onClick={() => {
+                router.push("/");
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg border border-white/20 transition-all duration-300 flex items-center gap-2"
+            >
+              <FiHome /> Home
+            </button>
+            <button
+              onClick={() => {
+                router.back();
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg border border-white/20 transition-all duration-300 flex items-center gap-2"
+            >
+              <FiArrowLeft /> Back
+            </button>
+            {user ? (
+              <>
+                <button
+                  onClick={() => {
+                    router.push("/analytics");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg border border-yellow-500 transition-all duration-300 flex items-center gap-2"
+                >
+                  <FiBarChart2 /> Analytics
+                </button>
+                <button
+                  onClick={logout}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg border border-red-500 transition-all duration-300 flex items-center gap-2"
+                >
+                  <FiLogOut /> Sign Out
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  setShowAuthModal(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg border border-yellow-500 transition-all duration-300 flex items-center gap-2"
+              >
+                <FiUser /> Sign In
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Header */}
         <div className="mb-10 text-center">
@@ -312,6 +435,13 @@ function ComparePageContent() {
 
       {/* Floating Action Buttons */}
       <ShoppingAssistant />
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        initialMode="login"
+      />
     </main>
   );
 }
