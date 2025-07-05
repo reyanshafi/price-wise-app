@@ -26,7 +26,7 @@ import {
   FiLogOut
 } from "react-icons/fi";
 import ProductCard from "@/components/ProductCard";
-import ShoppingAssistant from "@/components/ShoppingAssistant";
+import Chatbot from "@/components/Chatbot";
 import AuthModal from "@/components/AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { AnalyticsService } from "@/services/analyticsService";
@@ -417,8 +417,8 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Floating Action Buttons */}
-      <ShoppingAssistant />
+      {/* AI Assistant */}
+      <Chatbot />
       
       {/* Auth Modal */}
       <AuthModal 

@@ -10,7 +10,7 @@ import {
   signInWithPopup,
   updateProfile,
 } from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebaseClient";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
 const AuthContext = createContext({});

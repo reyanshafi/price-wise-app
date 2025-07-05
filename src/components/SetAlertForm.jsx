@@ -48,8 +48,11 @@ export default function SetAlertForm() {
       className="bg-white/20 backdrop-blur-sm p-8 rounded-2xl border border-white/20 shadow-xl max-w-xl mx-auto mt-8 space-y-6"
     >
       <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-        🔔 Set a Price Drop Alert
+        🔔 Set a Price Alert
       </h2>
+      <p className="text-blue-100 text-sm">
+        Get notified when a product reaches your desired price. You can set any price - whether it's higher or lower than the current price!
+      </p>
 
       <div>
         <label className="block text-sm font-medium text-blue-100 mb-1">
@@ -74,9 +77,14 @@ export default function SetAlertForm() {
           value={targetPrice}
           onChange={(e) => setTargetPrice(e.target.value)}
           required
+          min="1"
+          step="0.01"
           className="w-full border-0 px-4 py-3 rounded-lg bg-white/80 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-200 shadow"
-          placeholder="12999"
+          placeholder="Enter any price (e.g., 12999 or 50000)"
         />
+        <p className="text-xs text-blue-200 mt-1">
+          💡 Set any price you want - we'll notify you when the product reaches this price (higher or lower)
+        </p>
       </div>
 
       <div>

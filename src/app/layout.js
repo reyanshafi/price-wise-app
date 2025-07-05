@@ -1,6 +1,13 @@
 import "./globals.css";
 import Link from "next/link";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { Montserrat } from "next/font/google";
+
+const montserrat = Montserrat({ 
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-montserrat"
+});
 
 export const metadata = {
   title: "Price-Wise",
@@ -10,9 +17,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-        // className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${montserrat.variable} font-sans antialiased`}>
         <AuthProvider>
           <div>{children}</div>
         </AuthProvider>

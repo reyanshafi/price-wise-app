@@ -1,4 +1,7 @@
 // scripts/trigger.js
+import dotenv from "dotenv";
+dotenv.config({ path: '.env.local' });
+
 import { checkAlerts } from "./checkPriceAlerts.js";
 
 (async () => {

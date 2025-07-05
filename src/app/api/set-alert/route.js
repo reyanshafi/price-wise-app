@@ -12,18 +12,12 @@ export async function POST(req) {
       !productUrl.startsWith("http") ||
       !targetPrice ||
       isNaN(targetPrice) ||
+      targetPrice <= 0 ||
       !email ||
       !email.includes("@")
     ) {
       console.error("❌ Invalid data:", { productUrl, targetPrice, email });
-      return NextResponse.json({ message: "Invalid input data" }, { status: 400 });
-    }
-
-    // Validate that target price is lower than current price
-    if (currentPrice && targetPrice >= currentPrice) {
-      return NextResponse.json({ 
-        message: "Target price must be lower than current price" 
-      }, { status: 400 });
+      return NextResponse.json({ message: "Invalid input data. Please check all fields." }, { status: 400 });
     }
 
     // Create alert document
@@ -44,7 +38,7 @@ export async function POST(req) {
     console.log("✅ Price alert created:", alertData);
     return NextResponse.json({ 
       success: true, 
-      message: "Alert set successfully! You'll be notified when the price drops." 
+      message: "Alert set successfully! You'll be notified when the product reaches your target price." 
     });
 
   } catch (error) {

@@ -389,13 +389,16 @@ export default function ProductCard({ product }) {
                   <input
                     type="number"
                     required
-                    min="100"
-                    max={price - 100}
+                    min="1"
+                    step="0.01"
                     value={notifyData.targetPrice}
                     onChange={(e) => setNotifyData(prev => ({ ...prev, targetPrice: e.target.value }))}
                     className="w-full px-3 py-2 text-sm border border-orange-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder={`Less than ₹${price.toLocaleString()}`}
+                    placeholder="Enter any price (e.g., 10000 or 50000)"
                   />
+                  <p className="text-xs text-orange-600 mt-1">
+                    💡 Set any price - we'll notify you when it's reached
+                  </p>
                 </div>
                 
                 <button

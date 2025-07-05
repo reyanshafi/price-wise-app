@@ -5,7 +5,7 @@ import { useEffect, useState, Suspense } from "react";
 import ProductCard from "@/components/ProductCard";
 import PredictivePriceCard from "@/components/PredictivePriceCard";
 import PriceTrendAnalysis from "@/components/PriceTrendAnalysis";
-import ShoppingAssistant from "@/components/ShoppingAssistant";
+import Chatbot from "@/components/Chatbot";
 import AuthModal from "@/components/AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { AnalyticsService } from "@/services/analyticsService";
@@ -434,7 +434,8 @@ function ComparePageContent() {
       </div>
 
       {/* Floating Action Buttons */}
-      <ShoppingAssistant />
+      {/* AI Assistant */}
+      <Chatbot />
       
       {/* Auth Modal */}
       <AuthModal 

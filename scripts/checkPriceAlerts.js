@@ -1,6 +1,7 @@
-import { db } from "../src/lib/firebase.js";
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config({ path: '.env.local' });
+
+import { db } from "../src/lib/firebase.js";
 
 import {
   collection,
@@ -84,22 +85,23 @@ export async function checkAlerts() {
       // 🟡 Update price history in Firestore
       await updatePriceHistory(productUrl, price, title);
 
-      // 🟢 Send email if price has dropped
+      // 🟢 Send email if target price is reached (flexible pricing)
       if (price <= targetPrice) {
         await sendEmail(
           email,
-          "🎉 Price Drop Alert!",
+          "🎉 Price Alert - Target Reached!",
           `
             <h3>${title}</h3>
-            <p>The price has dropped to <strong>₹${price}</strong> (Your target: ₹${targetPrice})</p>
-            <p><a href="${link}" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#10b981;color:white;text-decoration:none;border-radius:6px;">Buy Now</a></p>
+            <p>Great news! The price has reached your target of <strong>₹${targetPrice}</strong></p>
+            <p>Current price: <strong>₹${price}</strong></p>
+            <p><a href="${link}" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#10b981;color:white;text-decoration:none;border-radius:6px;">Check it out</a></p>
           `
         );
 
         await deleteDoc(doc(db, "alerts", alertDoc.id));
         console.log(`✅ Alert sent and deleted for ${email}`);
       } else {
-        console.log(`ℹ️ No drop for "${title}"`);
+        console.log(`ℹ️ Price not yet reached target for "${title}" (Current: ₹${price}, Target: ₹${targetPrice})`);
       }
     } catch (err) {
       console.error(`❌ Error checking alert (${productUrl}):`, err.message);
