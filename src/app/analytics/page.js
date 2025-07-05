@@ -250,7 +250,7 @@ export default function AnalyticsPage() {
             Welcome back, {user.displayName || "Shopper"}!
           </h2>
           <p className="text-blue-100 text-sm sm:text-base">
-            Here's how much you've saved with PriceWise
+            Here&apos;s how much you&apos;ve saved with PriceWise
           </p>
         </div>
 
@@ -451,7 +451,7 @@ export default function AnalyticsPage() {
         <div className="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-xl p-6 sm:p-8 text-center">
           <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">Keep Saving More!</h3>
           <p className="text-yellow-100 mb-4 text-sm sm:text-base">
-            You're doing great! Continue using PriceWise to maximize your savings.
+            You&apos;re doing great! Continue using PriceWise to maximize your savings.
           </p>
           <button
             onClick={() => router.push("/")}
