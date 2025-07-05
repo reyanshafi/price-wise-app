@@ -1,12 +1,12 @@
 import "./globals.css";
 import Link from "next/link";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { Montserrat } from "next/font/google";
+import { Quicksand } from "next/font/google";
 
-const montserrat = Montserrat({ 
+const quicksand = Quicksand({ 
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-montserrat"
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-quicksand"
 });
 
 export const metadata = {
@@ -17,7 +17,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${montserrat.variable} font-sans antialiased`}>
+      <body className={`${quicksand.variable} font-sans antialiased`}>
         <AuthProvider>
           <div>{children}</div>
         </AuthProvider>

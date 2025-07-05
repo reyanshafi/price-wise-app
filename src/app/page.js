@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Head from "next/head";
 import { 
   FiSearch, 
   FiLoader, 
@@ -127,7 +128,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50" style={{ fontFamily: 'Quicksand, sans-serif' }}>
       {/* Header */}
       <header className="relative overflow-hidden">
         {/* Background Pattern */}
