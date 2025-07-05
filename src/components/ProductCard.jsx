@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { FiExternalLink, FiTrendingUp, FiLoader, FiBell, FiX } from "react-icons/fi";
+import { useState, useEffect } from "react";
+import { FiExternalLink, FiTrendingUp, FiLoader, FiAlertCircle, FiX } from "react-icons/fi";
 
 export default function ProductCard({ product }) {
   const [showPrediction, setShowPrediction] = useState(false);
@@ -13,6 +13,9 @@ export default function ProductCard({ product }) {
   });
   const [notifyLoading, setNotifyLoading] = useState(false);
   const [notifySuccess, setNotifySuccess] = useState(false);
+  const [hiddenCosts, setHiddenCosts] = useState({ tax: 0, shipping: 0 });
+  const [hiddenCostsLoading, setHiddenCostsLoading] = useState(true);
+  const [hiddenCostsError, setHiddenCostsError] = useState(false);
   
   const {
     title,
@@ -36,6 +39,40 @@ export default function ProductCard({ product }) {
   const discountPercentage = hasDiscount
     ? parseInt(discount.match(/\d+/)?.[0] || 0)
     : 0;
+
+  useEffect(() => {
+    const fetchHiddenCosts = async () => {
+      setHiddenCostsLoading(true);
+      setHiddenCostsError(false);
+      
+      try {
+        const response = await fetch(`/api/fetch-hidden-costs?url=${encodeURIComponent(link)}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Hidden costs data for', platform, ':', data); // Debug log
+        
+        setHiddenCosts({
+          tax: data.tax || 0,
+          shipping: data.shipping || 0,
+        });
+      } catch (error) {
+        console.error("Failed to fetch hidden costs for", platform, ":", error);
+        setHiddenCostsError(true);
+        // Set default values on error
+        setHiddenCosts({ tax: 0, shipping: 0 });
+      } finally {
+        setHiddenCostsLoading(false);
+      }
+    };
+
+    fetchHiddenCosts();
+  }, [link, platform]);
+
+  const totalPriceWithHiddenCosts = price + hiddenCosts.tax + hiddenCosts.shipping;
 
   const fetchPrediction = async () => {
     if (predictionData) return;
@@ -141,14 +178,61 @@ export default function ProductCard({ product }) {
           </h2>
         </div>
 
-        {/* Rating */}
+        {/* Rating and Reviews */}
         {rating && (
-          <div className="flex items-center mb-2">
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <svg
+                      key={i}
+                      className={`w-4 h-4 ${i < Math.floor(rating) ? "text-yellow-400" : "text-gray-300"}`}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <span className="text-sm font-medium text-gray-700">{rating.toFixed(1)}</span>
+                {reviewCount && (
+                  <span className="text-xs text-gray-500">({reviewCount.toLocaleString()} reviews)</span>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                  rating >= 4.5 ? 'bg-green-100 text-green-800' :
+                  rating >= 4 ? 'bg-blue-100 text-blue-800' :
+                  rating >= 3 ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {rating >= 4.5 ? 'Excellent' :
+                   rating >= 4 ? 'Very Good' :
+                   rating >= 3 ? 'Good' :
+                   'Fair'}
+                </span>
+              </div>
+            </div>
+            
+            {/* Display sample reviews if available */}
+            {reviews && reviews.length > 0 && (
+              <div className="bg-gray-50 p-2 rounded-lg">
+                <p className="text-xs font-medium text-gray-600 mb-1">Latest Review:</p>
+                <p className="text-xs text-gray-700 italic">"{reviews[0].text}"</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* If no rating available */}
+        {!rating && (
+          <div className="flex items-center mb-3">
             <div className="flex">
               {[...Array(5)].map((_, i) => (
                 <svg
                   key={i}
-                  className={`w-3 h-3 ${i < Math.floor(rating) ? "text-yellow-400" : "text-gray-300"}`}
+                  className="w-4 h-4 text-gray-300"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -156,7 +240,7 @@ export default function ProductCard({ product }) {
                 </svg>
               ))}
             </div>
-            <span className="text-xs text-gray-500 ml-1">{rating.toFixed(1)}</span>
+            <span className="text-xs text-gray-400 ml-2">No reviews yet</span>
           </div>
         )}
 
@@ -175,15 +259,47 @@ export default function ProductCard({ product }) {
             )}
           </div>
 
-          {shippingAmount > 0 ? (
-            <p className="text-xs text-gray-600 mt-1">
-              + ₹{shippingAmount.toLocaleString()} shipping •{" "}
-              <span className="font-medium text-gray-700">
-                ₹{totalPrice.toLocaleString()} total
-              </span>
-            </p>
+          {hiddenCostsLoading ? (
+            <div className="flex items-center gap-1 mt-1">
+              <FiLoader className="animate-spin h-3 w-3 text-gray-400" />
+              <p className="text-xs text-gray-400">Loading costs...</p>
+            </div>
           ) : (
-            <p className="text-xs text-green-600 font-medium mt-1">Free Shipping</p>
+            <>
+              {hiddenCosts.shipping > 0 && (
+                <p className="text-xs text-orange-600 mt-1">
+                  + ₹{hiddenCosts.shipping.toLocaleString()} shipping
+                </p>
+              )}
+              {hiddenCosts.shipping === 0 && !hiddenCostsError && (
+                <p className="text-xs text-green-600 mt-1">
+                  ✓ Free shipping
+                </p>
+              )}
+
+              {hiddenCosts.tax > 0 && (
+                <p className="text-xs text-red-600 mt-1">
+                  + ₹{hiddenCosts.tax.toLocaleString()} tax (GST)
+                </p>
+              )}
+
+              {hiddenCostsError && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Hidden costs unavailable
+                </p>
+              )}
+
+              <div className="border-t border-gray-200 mt-2 pt-2">
+                <p className="text-sm font-semibold text-gray-800">
+                  Total: ₹{totalPriceWithHiddenCosts.toLocaleString()}
+                  {(hiddenCosts.tax > 0 || hiddenCosts.shipping > 0) && (
+                    <span className="text-xs font-normal text-gray-500 ml-1">
+                      (incl. all costs)
+                    </span>
+                  )}
+                </p>
+              </div>
+            </>
           )}
 
           {/* Coupon & Tax Info */}
@@ -240,7 +356,7 @@ export default function ProductCard({ product }) {
               onClick={handleNotifyMe}
               className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium py-2 px-3 rounded-md text-center transition-colors flex items-center justify-center gap-1"
             >
-              <FiBell size={12} />
+              <FiAlertCircle size={12} />
               Notify Me
             </button>
           </div>
@@ -251,7 +367,7 @@ export default function ProductCard({ product }) {
           <div className="mt-3 p-4 bg-orange-50 rounded-md border border-orange-200">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-medium text-orange-800 flex items-center gap-1">
-                <FiBell size={14} />
+                <FiAlertCircle size={14} />
                 Set Price Alert
               </h4>
               <button
@@ -312,7 +428,7 @@ export default function ProductCard({ product }) {
                     </>
                   ) : (
                     <>
-                      <FiBell size={14} />
+                      <FiAlertCircle size={14} />
                       Set Alert
                     </>
                   )}

@@ -1,6 +1,5 @@
 import "./globals.css";
-
-
+import Link from "next/link";
 
 export const metadata = {
   title: "Price-Wise",
@@ -13,7 +12,9 @@ export default function RootLayout({ children }) {
       <body
         // className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+       
+
+        <div>{children}</div>
       </body>
     </html>
   );

@@ -3,8 +3,9 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import ProductCard from "@/components/ProductCard";
-import PredictivePriceCard from "@/components/PredictivePriceCard"; // New component
-import PriceTrendAnalysis from "@/components/PriceTrendAnalysis"; // New component
+import PredictivePriceCard from "@/components/PredictivePriceCard";
+import PriceTrendAnalysis from "@/components/PriceTrendAnalysis";
+import ShoppingAssistant from "@/components/ShoppingAssistant";
 import {
   FiSearch,
   FiLoader,
@@ -308,6 +309,9 @@ function ComparePageContent() {
           </div>
         )}
       </div>
+
+      {/* Floating Action Buttons */}
+      <ShoppingAssistant />
     </main>
   );
 }

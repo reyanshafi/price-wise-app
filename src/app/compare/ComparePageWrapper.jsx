@@ -10,10 +10,7 @@ import {
   FiSearch,
   FiLoader,
   FiAlertCircle,
-  FiTrendingUp,
-  FiArrowLeft,
-  FiHome,
-  FiBarChart2,
+  FiTrendingUp
 } from "react-icons/fi";
 
 export default function ComparePageWrapper() {
@@ -169,32 +166,6 @@ export default function ComparePageWrapper() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-900 via-slate-900 to-indigo-950">
       <div className="relative z-10 container mx-auto px-6 py-16">
-        {/* Navigation */}
-        <nav className="flex items-center justify-between mb-12">
-          <div className="flex items-center space-x-3">
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-              <FiBarChart2 size={28} className="text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">PriceWise</h1>
-              <p className="text-blue-100 text-sm">Smart Price Intelligence</p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => router.back()}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-6 py-2 rounded-full border border-white/20 transition-all duration-300 flex items-center gap-2"
-            >
-              <FiArrowLeft /> Back
-            </button>
-            <button
-              onClick={() => router.push("/")}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-6 py-2 rounded-full border border-white/20 transition-all duration-300 flex items-center gap-2"
-            >
-              <FiHome /> Home
-            </button>
-          </div>
-        </nav>
         {/* Header */}
         <div className="mb-10 text-center">
             <div className="inline-flex items-center bg-blue-800/80 rounded-full px-4 py-2 mb-6 border border-blue-900">
