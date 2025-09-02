@@ -6,13 +6,13 @@ import { predictPrice } from "@/lib/predictPrice";
 function normalizeProductUrl(url) {
   try {
     if (!url) return null;
-    
+
     // Extract Amazon product ID if it's an Amazon URL
     const amazonMatch = url.match(/\/dp\/([A-Z0-9]{10})/i);
     if (amazonMatch) {
       return `https://www.amazon.in/dp/${amazonMatch[1]}`;
     }
-    
+
     // For other platforms, return simplified URL
     const urlObj = new URL(url);
     return `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname}`;
@@ -39,7 +39,7 @@ function generateMockPrediction(productUrl, currentPrice = null) {
   try {
     // If we have current price from the product card, use it as base
     let basePrice = currentPrice || 15000;
-    
+
     // If no current price, try to extract from URL context
     if (!currentPrice) {
       const url = productUrl.toLowerCase();
@@ -52,21 +52,21 @@ function generateMockPrediction(productUrl, currentPrice = null) {
       } else if (url.includes('laptop')) {
         basePrice = 40000;
       } else if (url.includes('watch')) {
-        basePrice = 8000;
+        basePrice = 9000;
       }
     }
-    
+
     // Generate realistic small fluctuation (±2-8%)
     const variation = (Math.random() - 0.5) * 0.15; // -7.5% to +7.5%
     const predictedPrice = Math.round(basePrice * (1 + variation));
-    
+
     // Ensure prediction is reasonable (within 10% of base price)
     const maxChange = basePrice * 0.1;
     const safePrediction = Math.max(
       basePrice - maxChange,
       Math.min(basePrice + maxChange, predictedPrice)
     );
-    
+
     return {
       productTitle: "Product (Limited Data Available)",
       currentPrice: basePrice,
@@ -98,7 +98,7 @@ export async function GET(request) {
   try {
     // Normalize URL to extract product ID for better matching
     const normalizedUrl = normalizeProductUrl(productUrl);
-    
+
     // Try multiple URL variations to find historical data
     const urlVariations = [
       productUrl,
@@ -114,7 +114,7 @@ export async function GET(request) {
       const encodedUrl = encodeURIComponent(url);
       const ref = doc(db, "price-history", encodedUrl);
       const testSnapshot = await getDoc(ref);
-      
+
       if (testSnapshot.exists()) {
         snapshot = testSnapshot;
         matchedUrl = url;
@@ -125,7 +125,7 @@ export async function GET(request) {
     if (!snapshot || !snapshot.exists()) {
       // Generate mock prediction based on current price if available
       const mockPrediction = generateMockPrediction(
-        productUrl, 
+        productUrl,
         currentPrice ? parseFloat(currentPrice) : null
       );
       if (mockPrediction) {
@@ -135,7 +135,7 @@ export async function GET(request) {
         });
       }
 
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify({
         error: "No historical data found for this product",
         predictedPrice: null,
         suggestion: "Start tracking this product to get predictions"
@@ -146,11 +146,11 @@ export async function GET(request) {
     }
 
     const { history, title } = snapshot.data();
-    
+
     if (!history || history.length < 2) {
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify({
         error: "Insufficient data for prediction (need at least 2 data points)",
-        predictedPrice: null 
+        predictedPrice: null
       }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -159,18 +159,18 @@ export async function GET(request) {
 
     // Use regression to predict next price
     const predictedPrice = predictPrice(history);
-    
+
     // Calculate trend direction
     const recentPrices = history.slice(-5); // Last 5 data points
-    const trend = recentPrices.length >= 2 
-      ? recentPrices[recentPrices.length - 1].price - recentPrices[0].price 
+    const trend = recentPrices.length >= 2
+      ? recentPrices[recentPrices.length - 1].price - recentPrices[0].price
       : 0;
-    
+
     const trendDirection = trend > 0 ? "increasing" : trend < 0 ? "decreasing" : "stable";
-    
+
     // Calculate confidence based on data points available
     const confidence = Math.min(history.length * 10, 95); // Max 95% confidence
-    
+
     return new Response(JSON.stringify({
       productTitle: title,
       currentPrice: history[history.length - 1]?.price,
@@ -186,9 +186,9 @@ export async function GET(request) {
 
   } catch (error) {
     console.error("Error predicting price:", error);
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       error: "Failed to predict price",
-      details: error.message 
+      details: error.message
     }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
