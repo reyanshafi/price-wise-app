@@ -1,6 +1,8 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AnalyticsService } from "@/services/analyticsService";
@@ -121,9 +123,9 @@ export default function AnalyticsPage() {
       {/* ── Navbar ──────────────────────────────────────────────────────── */}
       <nav className="pw-navbar" style={{ position: 'relative', background: '#fff', borderBottom: '1px solid var(--border)' }}>
         <div className="pw-navbar-inner">
-          <a href="/" className="pw-logo">
+          <Link href="/" className="pw-logo">
             <img src="/pricewise-logo.svg" alt="PriceWise" style={{ width: 110, height: "auto" }} />
-          </a>
+          </Link>
           <div className="pw-nav-actions">
             <button
               onClick={() => router.back()}
@@ -144,12 +146,12 @@ export default function AnalyticsPage() {
               
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg py-1 z-50 border border-gray-200">
-                  <a
+                  <Link
                     href="/"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                   >
                     <FiHome size={14} /> Home
-                  </a>
+                  </Link>
                   <button
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-gray-100"
                     onClick={handleLogout}
@@ -168,7 +170,7 @@ export default function AnalyticsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 pb-6 border-b border-gray-200">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-1">Analytics Dashboard</h1>
-            <p className="text-gray-500 text-sm">Welcome back, {user.displayName || "Shopper"}. Here's your shopping intelligence.</p>
+            <p className="text-gray-500 text-sm">Welcome back, {user.displayName || "Shopper"}. Here&apos;s your shopping intelligence.</p>
           </div>
         </div>
 

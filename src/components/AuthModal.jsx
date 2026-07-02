@@ -44,7 +44,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }) {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="relative bg-white w-full max-w-sm max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               {mode === "login" ? "Welcome Back" : "Join PriceWise"}

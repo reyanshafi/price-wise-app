@@ -102,7 +102,7 @@ export default function Chatbot() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 bg-[var(--primary)] hover:bg-blue-700 text-white p-4 rounded-none shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 z-50"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 bg-[var(--primary)] hover:bg-blue-700 text-white p-3 sm:p-4 rounded-none shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 z-50"
         aria-label="Open AI Assistant"
       >
         <FiMessageCircle size={24} />
@@ -111,8 +111,8 @@ export default function Chatbot() {
   }
 
   return (
-    <div className={`fixed bottom-6 right-6 bg-[var(--surface-1)] rounded-none shadow-xl border border-[var(--surface-3)] z-50 transition-all duration-300 ${
-      isMinimized ? 'h-16 w-80' : 'h-96 w-80 sm:w-96'
+    <div className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 bg-[var(--surface-1)] rounded-none shadow-xl border border-[var(--surface-3)] z-50 transition-all duration-300 ${
+      isMinimized ? 'h-16 w-[calc(100vw-2rem)] sm:w-80' : 'h-96 w-[calc(100vw-2rem)] sm:w-96'
     }`}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-[var(--surface-3)] bg-[var(--surface-2)] text-[var(--text-primary)] rounded-none">

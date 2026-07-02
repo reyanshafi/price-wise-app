@@ -1,7 +1,9 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
+import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import PredictivePriceCard from "@/components/PredictivePriceCard";
 import PriceTrendAnalysis from "@/components/PriceTrendAnalysis";
@@ -171,9 +173,9 @@ function ComparePageContent() {
       {/* ── Navbar (mirrored from home page) ─────────────────────────────── */}
       <nav className="pw-navbar" style={{ position: 'relative', background: '#fff', borderBottom: '1px solid var(--border)' }}>
         <div className="pw-navbar-inner">
-          <a href="/" className="pw-logo">
+          <Link href="/" className="pw-logo">
             <img src="/pricewise-logo.svg" alt="PriceWise" style={{ width: 110, height: "auto" }} />
-          </a>
+          </Link>
           <div className="pw-nav-actions">
             {user ? (
               <div className="relative">
@@ -225,16 +227,16 @@ function ComparePageContent() {
         </div>
       </nav>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-12">
-        <div className="mb-10 flex flex-col items-start border-b border-gray-200 pb-8">
-          <button onClick={() => router.back()} className="text-sm text-gray-500 hover:text-gray-900 mb-6 flex items-center gap-1 transition-colors">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-12">
+        <div className="mb-6 md:mb-10 flex flex-col items-start border-b border-gray-200 pb-6 md:pb-8">
+          <button onClick={() => router.back()} className="text-sm text-gray-500 hover:text-gray-900 mb-4 md:mb-6 flex items-center gap-1 transition-colors">
             <FiArrowLeft size={14} /> Back to Search
           </button>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-            Prices for "{query}"
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            Prices for &quot;{query}&quot;
           </h1>
-          <div className="flex items-center justify-between w-full">
-            <p className="text-base text-gray-500">
+          <div className="flex items-center justify-between w-full mt-2">
+            <p className="text-sm sm:text-base text-gray-500">
               Scanned {products.length} retailers.
               {filteredProducts.length !== products.length && (
                 <span> Showing {filteredProducts.length} in your price range.</span>
@@ -261,8 +263,8 @@ function ComparePageContent() {
           )}
 
           {/* Left Sidebar (Filters) */}
-          <aside className={`w-full md:w-72 flex-shrink-0 space-y-6 md:sticky md:top-6 fixed md:relative top-0 right-0 h-full md:h-auto bg-white z-50 md:z-0 transform transition-transform duration-300 md:transform-none overflow-y-auto md:overflow-visible shadow-2xl md:shadow-none p-6 md:p-0 ${showMobileFilters ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
-            <div className="flex justify-between items-center md:hidden mb-6">
+          <aside className={`w-full md:w-72 flex-shrink-0 space-y-6 md:sticky md:top-6 fixed md:relative top-0 right-0 h-full md:h-auto bg-[var(--surface-1)] z-50 md:z-0 transform transition-transform duration-300 md:transform-none overflow-y-auto md:overflow-visible shadow-2xl md:shadow-none p-4 sm:p-6 md:p-0 ${showMobileFilters ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
+            <div className="flex justify-between items-center md:hidden mb-6 mt-4">
               <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wider">Filters</h2>
               <button onClick={() => setShowMobileFilters(false)} className="text-gray-500 hover:text-gray-900">
                 <FiX size={24} />

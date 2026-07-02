@@ -103,7 +103,7 @@ export default function ProductCard({ product, isBestDeal }) {
       </div>
 
       {/* Product Info */}
-      <div className="p-6 flex flex-col flex-grow">
+      <div className="p-4 sm:p-5 flex flex-col flex-grow">
         <div className="mb-3">
           <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">
             {platform}

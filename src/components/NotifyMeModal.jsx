@@ -72,7 +72,7 @@ export default function NotifyMeModal({ isOpen, onClose, product }) {
           <FiX className="w-5 h-5" />
         </button>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="bg-orange-100 p-3 rounded-full text-orange-600">
               <FiAlertCircle className="w-6 h-6" />

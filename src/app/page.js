@@ -1,5 +1,8 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
+
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   FiSearch, FiLoader, FiBarChart2, FiArrowRight, FiTrendingUp,
@@ -94,9 +97,9 @@ export default function HomePage() {
         <div className="pw-navbar-inner">
 
           {/* Logo */}
-          <a href="/" className="pw-logo">
+          <Link href="/" className="pw-logo">
             <img src="/pricewise-logo.svg" alt="PriceWise" style={{ width: 110, height: "auto" }} />
-          </a>
+          </Link>
 
 
 
@@ -116,18 +119,18 @@ export default function HomePage() {
                 
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
-                    <a
+                    <Link
                       href="/analytics"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                     >
                       <FiBarChart2 size={14} /> Analytics
-                    </a>
-                    <a
+                    </Link>
+                    <Link
                       href="/settings"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                     >
                       <FiUser size={14} /> Settings
-                    </a>
+                    </Link>
                     <div className="border-t border-gray-100 my-1"></div>
                     <button
                       className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
@@ -208,7 +211,7 @@ export default function HomePage() {
             </div>
           </form>
           <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10 }}>
-            Try: "iPhone 15", "Samsung TV", "Nike Air Max", "boAt earbuds"
+            Try: &quot;iPhone 15&quot;, &quot;Samsung TV&quot;, &quot;Nike Air Max&quot;, &quot;boAt earbuds&quot;
           </p>
         </div>
         </section>
