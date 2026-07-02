@@ -6,14 +6,21 @@ export async function GET(request) {
   try {
     // Check for secret token to prevent unauthorized access
     const { searchParams } = new URL(request.url);
-    const secret = searchParams.get('secret');
+    const secretParam = searchParams.get('secret');
+    const authHeader = request.headers.get('authorization');
     
     // Validate secret if provided in environment
-    if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (process.env.CRON_SECRET) {
+      const isAuthorized = 
+        secretParam === process.env.CRON_SECRET || 
+        authHeader === `Bearer ${process.env.CRON_SECRET}`;
+        
+      if (!isAuthorized) {
+        return NextResponse.json(
+          { success: false, message: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
     }
     
     console.log('🕒 Starting scheduled price alert check...');

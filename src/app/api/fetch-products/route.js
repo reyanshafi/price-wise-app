@@ -1,172 +1,100 @@
+import {
+  scrapeViaSerpApi,
+  scrapeAmazonViaSerpApi,
+  scrapeFlipkartDirect,
+} from "@/lib/scraper/serpApiScraper";
 import { scrapeAmazon } from "@/lib/scraper/amazonScraper";
 import { scrapeSnapdeal } from "@/lib/scraper/snapdealScraper";
-import { scrapeCroma } from "@/lib/scraper/cromaScraper"; // ✅ Croma
-import { scrapeWithAPI } from "@/lib/scraper/apiScraper";
-import { filterRelevantProducts } from "@/lib/utils/productFilters";
+import { scrapeCroma } from "@/lib/scraper/cromaScraper";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("query");
 
   if (!query) {
-    return new Response(JSON.stringify({ error: "Missing query" }), {
-      status: 400,
-    });
+    return Response.json({ error: "Missing query" }, { status: 400 });
   }
 
-  try {
-    console.log("🚀 Starting product fetch for query:", query);
-    
-    let amazonResults = [];
-    let snapdealResults = [];
-    let cromaResults = [];
+  console.log(`\n🔍 Fetching products for: "${query}"`);
 
-    try {
-      // Try direct scraping first
-      const [amazonRes, snapdealRes, cromaRes] = await Promise.all([
-        scrapeAmazon(query).catch(err => {
-          console.warn("Direct Amazon scraping failed:", err.message);
-          return [];
-        }),
-        scrapeSnapdeal(query).catch(err => {
-          console.warn("Direct Snapdeal scraping failed:", err.message);
-          return [];
-        }),
-        scrapeCroma(query).catch(err => {
-          console.warn("Direct Croma scraping failed:", err.message);
-          return [];
-        })
-      ]);
+  // ── Run all sources in parallel ──────────────────────────────────────────────
+  // 1. SerpAPI Google Shopping  → Myntra, Nykaa, Ajio, Meesho, Croma, Snapdeal, etc.
+  // 2. SerpAPI Amazon engine    → Real Amazon.in results
+  // 3. Flipkart direct          → Direct HTTP scrape (partial SSR)
+  // All three run simultaneously — fastest wins, errors are silent.
 
-      amazonResults = amazonRes;
-      snapdealResults = snapdealRes;
-      cromaResults = cromaRes;
+  const [googleShoppingResults, amazonResults, flipkartResults] = await Promise.all([
+    scrapeViaSerpApi(query, 16).catch((err) => {
+      console.warn("⚠️ Google Shopping SerpAPI failed:", err.message);
+      return [];
+    }),
+    scrapeAmazonViaSerpApi(query, 6).catch((err) => {
+      console.warn("⚠️ Amazon SerpAPI failed:", err.message);
+      return [];
+    }),
+    scrapeFlipkartDirect(query, 6).catch((err) => {
+      console.warn("⚠️ Flipkart direct failed:", err.message);
+      return [];
+    }),
+  ]);
 
-      console.log("✅ Direct scraping results:", {
-        amazon: amazonResults.length,
-        snapdeal: snapdealResults.length,
-        croma: cromaResults.length
-      });
+  let products = [...amazonResults, ...flipkartResults, ...googleShoppingResults];
 
-      // If direct scraping fails, try API scraping
-      if (amazonResults.length === 0 && snapdealResults.length === 0 && cromaResults.length === 0) {
-        console.log("🔄 Direct scraping failed, trying API scraping...");
-        
-        try {
-          const [amazonApiRes, snapdealApiRes, cromaApiRes] = await Promise.all([
-            scrapeWithAPI(`https://www.amazon.in/s?k=${encodeURIComponent(query)}`, query).catch(err => {
-              console.warn("API Amazon scraping failed:", err.message);
-              return [];
-            }),
-            scrapeWithAPI(`https://www.snapdeal.com/search?keyword=${encodeURIComponent(query)}`, query).catch(err => {
-              console.warn("API Snapdeal scraping failed:", err.message);
-              return [];
-            }),
-            scrapeWithAPI(`https://www.croma.com/search?q=${encodeURIComponent(query)}`, query).catch(err => {
-              console.warn("API Croma scraping failed:", err.message);
-              return [];
-            })
-          ]);
+  console.log(`📊 Raw counts — Amazon: ${amazonResults.length}, Flipkart: ${flipkartResults.length}, Google Shopping: ${googleShoppingResults.length}`);
 
-          amazonResults = amazonApiRes;
-          snapdealResults = snapdealApiRes;
-          cromaResults = cromaApiRes;
+  // ── Fallback: legacy axios scrapers if everything above failed ───────────────
+  if (products.length === 0) {
+    console.log("🔄 All primary sources failed — trying legacy direct scrapers...");
 
-          console.log("✅ API scraping results:", {
-            amazon: amazonResults.length,
-            snapdeal: snapdealResults.length,
-            croma: cromaResults.length
-          });
-        } catch (apiError) {
-          console.error("API scraping also failed:", apiError);
-        }
-      }
-    } catch (error) {
-      console.error("All scraping methods failed:", error);
-    }
+    const [amzFallback, sdFallback, crFallback] = await Promise.all([
+      scrapeAmazon(query).catch(() => []),
+      scrapeSnapdeal(query).catch(() => []),
+      scrapeCroma(query).catch(() => []),
+    ]);
 
-    const combined = [
-      ...amazonResults,
-      ...snapdealResults,
-      ...cromaResults,
-    ];
+    products = [...amzFallback, ...sdFallback, ...crFallback];
+    console.log(`📊 Legacy fallback: ${products.length} products`);
+  }
 
-    // Filter for relevant products only - stricter filtering
-    const relevantProducts = filterRelevantProducts(combined, query, 150, 8);
-    
-    console.log("✅ Filtered Relevant Products:", relevantProducts.length);
-    console.log("🎯 Relevance scores:", relevantProducts.slice(0, 5).map(p => ({
-      title: p.title.substring(0, 50) + "...",
-      score: p.relevanceScore
-    })));
-
-    // If no products found, provide mock data for demo
-    if (relevantProducts.length === 0) {
-      console.log("🎭 No products found, providing mock data for demo");
-      const mockProducts = [
-        {
-          title: `${query} - Premium Quality`,
-          price: 15999,
-          link: `https://www.amazon.in/s?k=${encodeURIComponent(query)}`,
-          image: "/globe.svg",
-          rating: 4.2,
-          platform: "Amazon",
-          relevanceScore: 0.95
-        },
-        {
-          title: `${query} - Best Seller`,
-          price: 12999,
-          link: `https://www.snapdeal.com/search?keyword=${encodeURIComponent(query)}`,
-          image: "/globe.svg",
-          rating: 4.0,
-          platform: "Snapdeal",
-          relevanceScore: 0.90
-        },
-        {
-          title: `${query} - Latest Model`,
-          price: 18999,
-          link: `https://www.croma.com/search?q=${encodeURIComponent(query)}`,
-          image: "/globe.svg",
-          rating: 4.5,
-          platform: "Croma",
-          relevanceScore: 0.85
-        }
-      ];
-      
-      return new Response(JSON.stringify({ 
-        query, 
-        results: mockProducts,
-        totalScraped: 0,
-        relevantCount: mockProducts.length,
-        demo: true
-      }), {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-    }
-
-    return new Response(JSON.stringify({ 
-      query, 
-      results: relevantProducts,
-      totalScraped: combined.length,
-      relevantCount: relevantProducts.length
-    }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ error: "Scraping failed", details: err.message }),
+  // ── Empty state — return honestly ────────────────────────────────────────────
+  if (products.length === 0) {
+    return Response.json(
       {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+        query,
+        results: [],
+        totalScraped: 0,
+        source: "none",
+        message: "No products found. Try a more specific search.",
+      },
+      { status: 200 }
     );
   }
+
+  // ── Deduplicate by title (first 45 chars, lowercased) ────────────────────────
+  const seen = new Set();
+  const unique = products.filter((p) => {
+    const key = (p.title || "").toLowerCase().slice(0, 45);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const platforms = [...new Set(unique.map((p) => p.platform))];
+  console.log(`✅ Final: ${unique.length} unique products from: ${platforms.join(", ")}`);
+
+  const source =
+    amazonResults.length > 0 || googleShoppingResults.length > 0
+      ? "serpapi"
+      : "direct";
+
+  return Response.json(
+    {
+      query,
+      results: unique,
+      totalScraped: unique.length,
+      source,
+      platforms,
+    },
+    { status: 200 }
+  );
 }

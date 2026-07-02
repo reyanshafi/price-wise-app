@@ -1,24 +1,17 @@
 "use client";
 import { useState, useEffect } from "react";
-import { FiExternalLink, FiTrendingUp, FiLoader, FiAlertCircle, FiX } from "react-icons/fi";
+import { FiExternalLink, FiTrendingUp, FiLoader, FiAlertCircle } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import { AnalyticsService } from "@/services/analyticsService";
+import NotifyMeModal from "./NotifyMeModal";
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, isBestDeal }) {
   const { user } = useAuth();
   const [showPrediction, setShowPrediction] = useState(false);
   const [predictionData, setPredictionData] = useState(null);
   const [loadingPrediction, setLoadingPrediction] = useState(false);
-  const [showNotifyMe, setShowNotifyMe] = useState(false);
-  const [notifyData, setNotifyData] = useState({
-    email: '',
-    targetPrice: ''
-  });
-  const [notifyLoading, setNotifyLoading] = useState(false);
-  const [notifySuccess, setNotifySuccess] = useState(false);
-  const [hiddenCosts, setHiddenCosts] = useState({ tax: 0, shipping: 0 });
-  const [hiddenCostsLoading, setHiddenCostsLoading] = useState(true);
-  const [hiddenCostsError, setHiddenCostsError] = useState(false);
+  const [showNotifyMeModal, setShowNotifyMeModal] = useState(false);
+
   
   const {
     title,
@@ -59,39 +52,7 @@ export default function ProductCard({ product }) {
     trackView();
   }, [user, product, title, price, platform, link]);
 
-  useEffect(() => {
-    const fetchHiddenCosts = async () => {
-      setHiddenCostsLoading(true);
-      setHiddenCostsError(false);
-      
-      try {
-        const response = await fetch(`/api/fetch-hidden-costs?url=${encodeURIComponent(link)}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('Hidden costs data for', platform, ':', data); // Debug log
-        
-        setHiddenCosts({
-          tax: data.tax || 0,
-          shipping: data.shipping || 0,
-        });
-      } catch (error) {
-        console.error("Failed to fetch hidden costs for", platform, ":", error);
-        setHiddenCostsError(true);
-        // Set default values on error
-        setHiddenCosts({ tax: 0, shipping: 0 });
-      } finally {
-        setHiddenCostsLoading(false);
-      }
-    };
 
-    fetchHiddenCosts();
-  }, [link, platform]);
-
-  const totalPriceWithHiddenCosts = price + hiddenCosts.tax + hiddenCosts.shipping;
 
   const fetchPrediction = async () => {
     if (predictionData) return;
@@ -119,56 +80,11 @@ export default function ProductCard({ product }) {
   };
 
   const handleNotifyMe = () => {
-    setShowNotifyMe(true);
-    setNotifySuccess(false);
-  };
-
-  const handleNotifyChange = (e) => {
-    const { name, value } = e.target;
-    setNotifyData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleNotifySubmit = async (e) => {
-    e.preventDefault();
-    setNotifyLoading(true);
-
-    try {
-      const response = await fetch('/api/set-alert', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productUrl: link,
-          targetPrice: parseFloat(notifyData.targetPrice),
-          email: notifyData.email,
-          productTitle: title,
-          currentPrice: price,
-          platform: platform
-        }),
-      });
-
-      if (response.ok) {
-        setNotifySuccess(true);
-        setNotifyData({ email: '', targetPrice: '' });
-        setTimeout(() => {
-          setShowNotifyMe(false);
-          setNotifySuccess(false);
-        }, 2000);
-      } else {
-        const errorData = await response.json();
-        alert(errorData.message || 'Failed to set alert');
-      }
-    } catch (error) {
-      console.error('Error setting alert:', error);
-      alert('Something went wrong. Please try again.');
-    } finally {
-      setNotifyLoading(false);
-    }
+    setShowNotifyMeModal(true);
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col h-full shadow-sm hover:shadow-md transition-shadow">
+    <div className="relative bg-white border border-gray-200 overflow-hidden flex flex-col h-full hover:border-blue-500 transition-colors duration-200">
       {/* Discount Ribbon */}
       {hasDiscount && (
         <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
@@ -187,12 +103,12 @@ export default function ProductCard({ product }) {
       </div>
 
       {/* Product Info */}
-      <div className="p-4 flex flex-col flex-grow">
-        <div className="mb-2">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+      <div className="p-6 flex flex-col flex-grow">
+        <div className="mb-3">
+          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">
             {platform}
           </p>
-          <h2 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight">
+          <h2 className="text-base font-semibold text-gray-900 line-clamp-2 leading-tight">
             {title}
           </h2>
         </div>
@@ -219,60 +135,33 @@ export default function ProductCard({ product }) {
         {/* Pricing */}
         <div className="mt-auto">
           {originalPrice && (
-            <p className="text-xs text-gray-400 line-through">₹{originalPrice.toLocaleString()}</p>
+            <p className="text-sm text-gray-400 line-through">₹{originalPrice.toLocaleString()}</p>
           )}
 
           <div className="flex items-baseline gap-2 mt-1">
-            <p className="text-lg font-bold text-gray-900">₹{price.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-gray-900">₹{price.toLocaleString()}</p>
             {hasDiscount && (
-              <span className="text-xs font-medium bg-green-100 text-green-800 px-1.5 py-0.5 rounded">
+              <span className="text-sm font-medium bg-green-100 text-green-800 px-2 py-0.5 rounded">
                 Save {discountPercentage}%
               </span>
             )}
           </div>
 
-          {hiddenCostsLoading ? (
-            <div className="flex items-center gap-1 mt-1">
-              <FiLoader className="animate-spin h-3 w-3 text-gray-400" />
-              <p className="text-xs text-gray-400">Loading costs...</p>
-            </div>
+          {shippingAmount > 0 ? (
+            <p className="text-sm text-orange-600 mt-1">
+              + ₹{shippingAmount.toLocaleString()} shipping
+            </p>
           ) : (
-            <>
-              {hiddenCosts.shipping > 0 && (
-                <p className="text-xs text-orange-600 mt-1">
-                  + ₹{hiddenCosts.shipping.toLocaleString()} shipping
-                </p>
-              )}
-              {hiddenCosts.shipping === 0 && !hiddenCostsError && (
-                <p className="text-xs text-green-600 mt-1">
-                  ✓ Free shipping
-                </p>
-              )}
-
-              {hiddenCosts.tax > 0 && (
-                <p className="text-xs text-red-600 mt-1">
-                  + ₹{hiddenCosts.tax.toLocaleString()} tax (GST)
-                </p>
-              )}
-
-              {hiddenCostsError && (
-                <p className="text-xs text-gray-400 mt-1">
-                  Hidden costs unavailable
-                </p>
-              )}
-
-              <div className="border-t border-gray-200 mt-2 pt-2">
-                <p className="text-sm font-semibold text-gray-800">
-                  Total: ₹{totalPriceWithHiddenCosts.toLocaleString()}
-                  {(hiddenCosts.tax > 0 || hiddenCosts.shipping > 0) && (
-                    <span className="text-xs font-normal text-gray-500 ml-1">
-                      (incl. all costs)
-                    </span>
-                  )}
-                </p>
-              </div>
-            </>
+            <p className="text-sm text-green-600 mt-1">
+              ✓ Free shipping
+            </p>
           )}
+
+          <div className="border-t border-gray-200 mt-4 pt-4">
+            <p className="text-base font-semibold text-gray-800">
+              Total: ₹{totalPrice.toLocaleString()}
+            </p>
+          </div>
 
           {/* Coupon & Tax Info */}
           {coupon && (
@@ -304,7 +193,7 @@ export default function ProductCard({ product }) {
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-4 space-y-2">
+        <div className="mt-5 space-y-3">
           <a
             href={link}
             target="_blank"
@@ -319,109 +208,37 @@ export default function ProductCard({ product }) {
                 }, price);
               }
             }}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-md text-center transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-base font-medium py-3 px-4 rounded-none text-center transition-colors flex items-center justify-center gap-2"
           >
-            <FiExternalLink size={14} />
+            <FiExternalLink size={16} />
             View on {platform}
           </a>
           
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={handlePredictionToggle}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium py-2 px-3 rounded-md text-center transition-colors flex items-center justify-center gap-1 border border-gray-300"
-            >
-              <FiTrendingUp size={12} />
-              {showPrediction ? 'Hide' : 'Predict'}
-            </button>
-            
+            onClick={handlePredictionToggle}
+            className="flex-1 flex items-center justify-center gap-1 bg-white border border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700 font-medium text-sm py-3 px-3 transition-colors duration-200 rounded-none"
+          >
+            <FiTrendingUp className={showPrediction ? "text-blue-600" : "text-gray-400"} size={14} />
+            {showPrediction ? 'Hide' : 'Predict'}
+          </button>
+          
             <button
               onClick={handleNotifyMe}
-              className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium py-2 px-3 rounded-md text-center transition-colors flex items-center justify-center gap-1"
+              className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium py-3 px-3 rounded-none text-center transition-colors flex items-center justify-center gap-1"
             >
-              <FiAlertCircle size={12} />
+              <FiAlertCircle size={14} />
               Notify Me
             </button>
           </div>
         </div>
 
-        {/* Notify Me Section */}
-        {showNotifyMe && (
-          <div className="mt-3 p-4 bg-orange-50 rounded-md border border-orange-200">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium text-orange-800 flex items-center gap-1">
-                <FiAlertCircle size={14} />
-                Set Price Alert
-              </h4>
-              <button
-                onClick={() => setShowNotifyMe(false)}
-                className="text-orange-600 hover:text-orange-800"
-              >
-                <FiX size={16} />
-              </button>
-            </div>
-            
-            {notifySuccess ? (
-              <div className="text-center py-3">
-                <div className="text-green-600 text-2xl mb-2">✅</div>
-                <p className="text-sm text-green-700 font-medium">Alert set successfully!</p>
-                <p className="text-xs text-green-600 mt-1">You'll be notified when the price drops</p>
-              </div>
-            ) : (
-              <form onSubmit={handleNotifySubmit} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-orange-700 mb-1">
-                    Your Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={notifyData.email}
-                    onChange={(e) => setNotifyData(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm border border-orange-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder="your@email.com"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-xs font-medium text-orange-700 mb-1">
-                    Target Price (Current: ₹{price.toLocaleString()})
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    step="0.01"
-                    value={notifyData.targetPrice}
-                    onChange={(e) => setNotifyData(prev => ({ ...prev, targetPrice: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm border border-orange-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder="Enter any price (e.g., 10000 or 50000)"
-                  />
-                  <p className="text-xs text-orange-600 mt-1">
-                    💡 Set any price - we'll notify you when it's reached
-                  </p>
-                </div>
-                
-                <button
-                  type="submit"
-                  disabled={notifyLoading}
-                  className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors flex items-center justify-center gap-2"
-                >
-                  {notifyLoading ? (
-                    <>
-                      <FiLoader className="animate-spin" size={14} />
-                      Setting Alert...
-                    </>
-                  ) : (
-                    <>
-                      <FiAlertCircle size={14} />
-                      Set Alert
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
-          </div>
-        )}
+        {/* Notify Me Modal */}
+        <NotifyMeModal 
+          isOpen={showNotifyMeModal} 
+          onClose={() => setShowNotifyMeModal(false)} 
+          product={product} 
+        />
 
         {/* Price Prediction Section */}
         {showPrediction && (
